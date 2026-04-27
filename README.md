@@ -1,33 +1,81 @@
-This is a [Plasmo extension](https://docs.plasmo.com/) project bootstrapped with [`plasmo init`](https://www.npmjs.com/package/plasmo).
+# Widkueski
 
-## Getting Started
+Widkueski es una extension de Chrome creada con [Plasmo](https://docs.plasmo.com/) que integra un widget para simular opciones de financiamiento de Kueski directamente en paginas de e-commerce.
 
-First, run the development server:
+## Requisitos
+
+- Node.js 18 o superior
+- npm
+- Google Chrome o un navegador compatible con extensiones de Chrome
+
+## Instalacion
+
+Clona el repositorio e instala las dependencias:
 
 ```bash
-pnpm dev
-# or
+git clone <URL_DEL_REPOSITORIO>
+cd widkueski
+npm install
+```
+
+## Ejecutar en desarrollo
+
+Inicia Plasmo en modo desarrollo:
+
+```bash
 npm run dev
 ```
 
-Open your browser and load the appropriate development build. For example, if you are developing for the chrome browser, using manifest v3, use: `build/chrome-mv3-dev`.
+Este comando genera la extension de desarrollo en:
 
-You can start editing the popup by modifying `popup.tsx`. It should auto-update as you make changes. To add an options page, simply add a `options.tsx` file to the root of the project, with a react component default exported. Likewise to add a content page, add a `content.ts` file to the root of the project, importing some module and do some logic, then reload the extension on your browser.
+```text
+build/chrome-mv3-dev
+```
 
-For further guidance, [visit our Documentation](https://docs.plasmo.com/)
+Mientras `npm run dev` este activo, Plasmo recompila los cambios automaticamente.
 
-## Making production build
+## Cargar la extension en Chrome
 
-Run the following:
+1. Abre Chrome y entra a `chrome://extensions`.
+2. Activa el `Modo de desarrollador` en la esquina superior derecha.
+3. Haz clic en `Cargar descomprimida`.
+4. Selecciona la carpeta `build/chrome-mv3-dev`.
+5. Abre una pagina web compatible y verifica que aparezca el widget de Widkueski.
+
+Cuando hagas cambios en el codigo, vuelve a la pagina de extensiones y presiona el boton de recargar de Widkueski si Chrome no actualiza la extension automaticamente.
+
+## Generar build de produccion
+
+Para crear una version lista para distribuir:
 
 ```bash
-pnpm build
-# or
 npm run build
 ```
 
-This should create a production bundle for your extension, ready to be zipped and published to the stores.
+La salida de produccion se genera en:
 
-## Submit to the webstores
+```text
+build/chrome-mv3-prod
+```
 
-The easiest way to deploy your Plasmo extension is to use the built-in [bpp](https://bpp.browser.market) GitHub action. Prior to using this action however, make sure to build your extension and upload the first version to the store to establish the basic credentials. Then, simply follow [this setup instruction](https://docs.plasmo.com/framework/workflows/submit) and you should be on your way for automated submission!
+## Empaquetar la extension
+
+Para generar el paquete comprimido:
+
+```bash
+npm run package
+```
+
+Plasmo crea el archivo `.zip` dentro de `build/`. Ese archivo sirve para compartir la extension o prepararla para publicacion.
+
+## Estructura principal
+
+- `content.tsx`: widget que se inyecta en las paginas web.
+- `popup.tsx`: interfaz del popup de la extension.
+- `assets/`: recursos visuales como iconos.
+- `package.json`: scripts, dependencias y configuracion base de la extension.
+
+## Notas antes de subir a GitHub
+
+El proyecto ignora dependencias, builds locales, paquetes generados, caches, logs y archivos de entorno. No subas manualmente carpetas como `node_modules/`, `.plasmo/` o `build/`; se regeneran con los comandos anteriores.
+# widKueski
