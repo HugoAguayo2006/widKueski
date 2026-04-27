@@ -1,3 +1,4 @@
+/* Variables visuales. */
 @custom-variant dark (&:is(.dark *));
 
 :root,

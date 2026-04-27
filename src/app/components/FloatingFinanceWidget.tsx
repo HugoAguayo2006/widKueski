@@ -1,6 +1,3 @@
-import { AnimatePresence, motion } from "motion/react"
-import type { ReactNode } from "react"
-import { useMemo, useState } from "react"
 import {
   CheckCircle2,
   ChevronRight,
@@ -15,7 +12,11 @@ import {
   XCircle,
   Zap
 } from "lucide-react"
+import { AnimatePresence, motion } from "motion/react"
+import type { ReactNode } from "react"
+import { useMemo, useState } from "react"
 
+// UI principal del widget.
 type WidgetState =
   | "collapsed"
   | "expanded"
@@ -28,13 +29,23 @@ type WidgetState =
 interface FloatingFinanceWidgetProps {
   productPrice: number
   productName?: string
+  productDescription?: string
+  originalPrice?: number | null
+  discountPercent?: number | null
+  rating?: number | null
+  reviewCount?: number | null
 }
 
 const installmentOptions = [1, 2, 3, 4, 6, 8, 10, 12]
 
 export function FloatingFinanceWidget({
   productPrice,
-  productName = "Este producto"
+  productName = "Este producto",
+  productDescription,
+  originalPrice,
+  discountPercent,
+  rating,
+  reviewCount
 }: FloatingFinanceWidgetProps) {
   const [state, setState] = useState<WidgetState>("collapsed")
   const [selectedInstallments, setSelectedInstallments] = useState(4)
@@ -44,6 +55,12 @@ export function FloatingFinanceWidget({
   const totalWithInterest = productPrice * (1 + interestRate)
   const paymentPerInstallment = totalWithInterest / selectedInstallments
   const minimumPayment = Math.ceil(productPrice / 12)
+  const computedDiscountPercent =
+    discountPercent ??
+    (originalPrice && originalPrice > productPrice
+      ? Math.round(((originalPrice - productPrice) / originalPrice) * 100)
+      : null)
+  const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
 
   const paymentDates = useMemo(
     () =>
@@ -142,21 +159,32 @@ export function FloatingFinanceWidget({
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}>
                     <div className="wk-product">
-                      <div className="wk-rating">
-                        <span>★★★★★</span>
-                        <em>(482 reseñas)</em>
-                      </div>
+                      {(rating || reviewCount) && (
+                        <div className="wk-rating">
+                          {rating && <span>{"★".repeat(starCount)}</span>}
+                          {reviewCount && (
+                            <em>
+                              ({reviewCount.toLocaleString("es-MX")} reseñas)
+                            </em>
+                          )}
+                        </div>
+                      )}
                       <h3>{productName}</h3>
-                      <p>128GB, Pantalla AMOLED 6.7", Camara 108MP, 5G</p>
+                      {productDescription && <p>{productDescription}</p>}
                       <div className="wk-priceRow">
                         <strong>${productPrice.toLocaleString("es-MX")}</strong>
-                        <s>$6,999</s>
-                        <mark>-29%</mark>
+                        {originalPrice && originalPrice > productPrice && (
+                          <s>${originalPrice.toLocaleString("es-MX")}</s>
+                        )}
+                        {computedDiscountPercent &&
+                          computedDiscountPercent > 0 && (
+                            <mark>-{computedDiscountPercent}%</mark>
+                          )}
                       </div>
                       <div className="wk-kueskiLine">
-                        <CreditCard size={22} />
-                        O desde ${minimumPayment.toLocaleString("es-MX")}{" "}
-                        quincenales con Kueski
+                        <CreditCard size={22} />O desde $
+                        {minimumPayment.toLocaleString("es-MX")} quincenales con
+                        Kueski
                       </div>
                     </div>
 
@@ -275,7 +303,9 @@ export function FloatingFinanceWidget({
                     </div>
 
                     <label className="wk-field">
-                      <span>Correo electronico para verificar elegibilidad</span>
+                      <span>
+                        Correo electronico para verificar elegibilidad
+                      </span>
                       <input
                         type="email"
                         placeholder="tu@email.com"
