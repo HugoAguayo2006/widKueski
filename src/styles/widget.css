@@ -1,0 +1,641 @@
+.wk-root,
+.wk-root * {
+  box-sizing: border-box;
+}
+
+.wk-root {
+  --wk-blue: #0642e0;
+  --wk-blue-2: #0b55ff;
+  --wk-ink: #111827;
+  --wk-muted: #4b5563;
+  --wk-line: #e5e7eb;
+  --wk-soft: #eef5ff;
+  color: var(--wk-ink);
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Segoe UI", sans-serif;
+  font-size: 16px;
+  line-height: 1.35;
+}
+
+.wk-launcher {
+  align-items: center;
+  background: linear-gradient(135deg, var(--wk-blue), var(--wk-blue-2));
+  border: 0;
+  border-radius: 999px;
+  bottom: 22px;
+  box-shadow: 0 16px 34px rgba(6, 66, 224, 0.3);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  gap: 12px;
+  min-height: 56px;
+  padding: 11px 16px 11px 18px;
+  position: fixed;
+  right: 22px;
+  text-align: left;
+  z-index: 2147483646;
+}
+
+.wk-launcher span {
+  display: grid;
+  gap: 1px;
+}
+
+.wk-launcher strong {
+  display: block;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wk-launcher b {
+  display: block;
+  font-size: 18px;
+  font-weight: 900;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.wk-scrim {
+  background: rgba(15, 23, 42, 0.48);
+  border: 0;
+  bottom: 0;
+  cursor: default;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 2147483644;
+}
+
+@supports (backdrop-filter: blur(10px)) {
+  .wk-scrim {
+    backdrop-filter: blur(8px);
+  }
+}
+
+.wk-panel {
+  background: #fff;
+  border-radius: 22px;
+  bottom: 18px;
+  box-shadow: 0 20px 64px rgba(15, 23, 42, 0.32);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 36px);
+  overflow: hidden;
+  position: fixed;
+  right: 18px;
+  width: min(380px, calc(100vw - 24px));
+  z-index: 2147483645;
+}
+
+.wk-header {
+  align-items: center;
+  background: linear-gradient(135deg, var(--wk-blue), var(--wk-blue-2));
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  min-height: 86px;
+  padding: 18px 22px;
+}
+
+.wk-brand {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+}
+
+.wk-brandIcon {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 14px;
+  display: flex;
+  height: 46px;
+  justify-content: center;
+  width: 46px;
+}
+
+.wk-brand h2,
+.wk-state h3,
+.wk-product h3,
+.wk-sectionTitle {
+  letter-spacing: 0;
+  margin: 0;
+}
+
+.wk-brand h2 {
+  color: white;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.wk-brand p {
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 14px;
+  font-weight: 600;
+  margin: 4px 0 0;
+}
+
+.wk-iconButton {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  height: 36px;
+  justify-content: center;
+  width: 36px;
+}
+
+.wk-iconButton:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.wk-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px;
+}
+
+.wk-stack {
+  display: grid;
+  gap: 16px;
+}
+
+.wk-product {
+  border-bottom: 1px solid var(--wk-line);
+  display: grid;
+  gap: 12px;
+  padding-bottom: 16px;
+}
+
+.wk-rating {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+
+.wk-rating span {
+  color: #f5b800;
+  font-size: 16px;
+  letter-spacing: 1px;
+}
+
+.wk-rating em {
+  color: var(--wk-muted);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.wk-product h3 {
+  color: var(--wk-ink);
+  font-size: 26px;
+  font-weight: 950;
+  line-height: 1.05;
+}
+
+.wk-product p {
+  color: var(--wk-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+.wk-priceRow {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.wk-priceRow strong {
+  color: var(--wk-ink);
+  font-size: 36px;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+}
+
+.wk-priceRow s {
+  color: #6b7280;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.wk-priceRow mark {
+  background: #fee2e2;
+  border-radius: 8px;
+  color: #e60012;
+  font-size: 14px;
+  font-weight: 900;
+  padding: 5px 8px;
+}
+
+.wk-kueskiLine {
+  align-items: center;
+  color: var(--wk-blue);
+  display: flex;
+  font-size: 14px;
+  font-weight: 850;
+  gap: 12px;
+}
+
+.wk-perks {
+  border-bottom: 1px solid var(--wk-line);
+  display: grid;
+  gap: 10px;
+  padding-bottom: 16px;
+}
+
+.wk-perk {
+  align-items: center;
+  color: #374151;
+  display: flex;
+  font-size: 14px;
+  gap: 10px;
+}
+
+.wk-perk svg {
+  color: #02a64f;
+}
+
+.wk-perk strong {
+  color: #374151;
+  font-weight: 900;
+}
+
+.wk-benefitGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.wk-benefit {
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--wk-line);
+  border-radius: 14px;
+  color: #374151;
+  display: flex;
+  gap: 10px;
+  min-height: 56px;
+  padding: 10px;
+}
+
+.wk-benefit svg {
+  color: var(--wk-blue);
+  flex: 0 0 auto;
+}
+
+.wk-benefit span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.wk-primary,
+.wk-secondary {
+  align-items: center;
+  border-radius: 14px;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 900;
+  gap: 10px;
+  justify-content: center;
+  min-height: 46px;
+  padding: 12px 16px;
+  text-align: center;
+}
+
+.wk-primary {
+  background: var(--wk-blue);
+  border: 1px solid var(--wk-blue);
+  color: white;
+}
+
+.wk-primary:hover {
+  background: #0538c7;
+}
+
+.wk-primary:disabled {
+  background: #8da5ee;
+  border-color: #8da5ee;
+  cursor: not-allowed;
+}
+
+.wk-secondary {
+  background: white;
+  border: 2px solid #d1d5db;
+  color: #374151;
+}
+
+.wk-note {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0;
+  text-align: center;
+}
+
+.wk-sectionTitle {
+  color: #374151;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.35;
+}
+
+.wk-installments {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.wk-installment {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 14px;
+  color: #111;
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 900;
+  min-height: 54px;
+}
+
+.wk-installment.wk-selected {
+  background: #edf5ff;
+  border-color: var(--wk-blue);
+  color: var(--wk-blue);
+}
+
+.wk-summary {
+  background: linear-gradient(135deg, var(--wk-blue), var(--wk-blue-2));
+  border-radius: 18px;
+  color: white;
+  padding: 22px;
+}
+
+.wk-summary p {
+  color: white;
+  font-size: 16px;
+  font-weight: 750;
+  margin: 0 0 12px;
+}
+
+.wk-summary > strong {
+  display: block;
+  font-size: 42px;
+  font-weight: 950;
+  letter-spacing: 0;
+  line-height: 1;
+  margin-bottom: 18px;
+}
+
+.wk-summary dl {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+}
+
+.wk-summary dl div,
+.wk-row,
+.wk-calendarRow {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.wk-summary dl div:last-child {
+  border-top: 1px solid rgba(255, 255, 255, 0.24);
+  margin-top: 4px;
+  padding-top: 16px;
+}
+
+.wk-summary dt,
+.wk-summary dd {
+  color: white;
+  font-size: 15px;
+  margin: 0;
+}
+
+.wk-summary dd {
+  font-weight: 900;
+  text-align: right;
+}
+
+.wk-info {
+  align-items: flex-start;
+  background: var(--wk-soft);
+  border-radius: 16px;
+  color: #374151;
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+}
+
+.wk-info svg {
+  color: var(--wk-blue);
+  flex: 0 0 auto;
+}
+
+.wk-info p {
+  font-size: 14px;
+  margin: 0;
+}
+
+.wk-field {
+  display: grid;
+  gap: 10px;
+}
+
+.wk-field span {
+  color: #374151;
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.wk-field input {
+  background: white;
+  border: 2px solid #d1d5db;
+  border-radius: 14px;
+  color: var(--wk-ink);
+  font: inherit;
+  font-size: 14px;
+  min-height: 46px;
+  outline: 0;
+  padding: 0 18px;
+}
+
+.wk-field input:focus {
+  border-color: var(--wk-blue);
+  box-shadow: 0 0 0 4px rgba(6, 66, 224, 0.12);
+}
+
+.wk-actions {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 1.2fr;
+}
+
+.wk-state {
+  display: grid;
+  gap: 14px;
+  justify-items: center;
+  padding: 20px 0;
+  text-align: center;
+}
+
+.wk-state h3 {
+  color: var(--wk-ink);
+  font-size: 22px;
+  font-weight: 950;
+}
+
+.wk-state p {
+  color: var(--wk-muted);
+  font-size: 14px;
+  margin: 0;
+}
+
+.wk-spinner {
+  color: var(--wk-blue);
+  height: 64px;
+  width: 64px;
+}
+
+.wk-resultIcon {
+  align-items: center;
+  border-radius: 999px;
+  display: flex;
+  height: 72px;
+  justify-content: center;
+  width: 72px;
+}
+
+.wk-success {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.wk-danger {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.wk-receipt {
+  background: #f8fafc;
+  border-radius: 16px;
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.wk-receipt p {
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.wk-row span {
+  color: #64748b;
+}
+
+.wk-row b {
+  color: var(--wk-ink);
+  text-align: right;
+}
+
+.wk-linkButton {
+  background: transparent;
+  border: 0;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 800;
+  padding: 6px;
+}
+
+.wk-calendar {
+  display: grid;
+  gap: 12px;
+  width: 100%;
+}
+
+.wk-calendarRow {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+}
+
+.wk-calendarRow span,
+.wk-calendarRow b,
+.wk-calendarRow em,
+.wk-calendar small {
+  color: white;
+}
+
+.wk-calendarRow em {
+  font-style: normal;
+  opacity: 0.75;
+}
+
+.wk-calendar small {
+  opacity: 0.8;
+}
+
+@media (max-width: 640px) {
+  .wk-launcher {
+    bottom: 14px;
+    min-height: 52px;
+    padding: 10px 14px;
+    right: 14px;
+  }
+
+  .wk-launcher b {
+    font-size: 17px;
+  }
+
+  .wk-panel {
+    border-radius: 28px 28px 0 0;
+    bottom: 0;
+    max-height: 88vh;
+    right: 0;
+    width: 100vw;
+  }
+
+  .wk-header,
+  .wk-body {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .wk-brand h2 {
+    font-size: 22px;
+  }
+
+  .wk-brand p {
+    font-size: 13px;
+  }
+
+  .wk-product h3 {
+    font-size: 24px;
+  }
+
+  .wk-priceRow strong {
+    font-size: 34px;
+  }
+
+  .wk-installments {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wk-actions,
+  .wk-benefitGrid {
+    grid-template-columns: 1fr;
+  }
+}
