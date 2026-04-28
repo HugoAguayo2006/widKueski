@@ -1,366 +1,366 @@
-import {CheckCircle2,ChevronRight,Clock,CreditCard,Gift,Info,Shield,ShoppingCart,Truck,X,XCircle,Zap} from "lucide-react" // Importa iconos
+import { CheckCircle2, ChevronRight, Clock, CreditCard, Gift, Info, Shield, ShoppingCart, Truck, X, XCircle, Zap } from "lucide-react" // Importa iconos
 import { AnimatePresence, motion } from "motion/react" // Importa animaciones
 import type { ReactNode } from "react"
 import { useMemo, useState } from "react"
 
 // Estados posibles del widget
 type WidgetState =
-  | "collapsed"   
-  | "expanded"     
-  | "simulator"     
-  | "loading"       
-  | "approved"     
-  | "rejected"      
-  | "confirmation"  
+	| "collapsed"
+	| "expanded"
+	| "simulator"
+	| "loading"
+	| "approved"
+	| "rejected"
+	| "confirmation"
 
-// Definir variables
+// Definir variables <- please fuck off now :)
 interface FloatingFinanceWidgetProps {
-  productPrice: number
-  productName?: string
-  productDescription?: string
-  originalPrice?: number | null
-  discountPercent?: number | null
-  rating?: number | null
-  reviewCount?: number | null
+	productPrice: number
+	productName?: string
+	productDescription?: string
+	originalPrice?: number | null
+	discountPercent?: number | null
+	rating?: number | null
+	reviewCount?: number | null
 }
 
 const installmentOptions = [1, 2, 3, 4, 6, 8, 10, 12]
 
-export function FloatingFinanceWidget({productPrice,productName="Este producto",productDescription,originalPrice,discountPercent,rating,reviewCount}:FloatingFinanceWidgetProps){
-  const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
-  const [selectedInstallments, setSelectedInstallments] = useState(4) // Cuántas quincenas eligió
-  const [userEmail, setUserEmail] = useState("") // Email del usuario
+export function FloatingFinanceWidget({ productPrice, productName = "Este producto", productDescription, originalPrice, discountPercent, rating, reviewCount }: FloatingFinanceWidgetProps) {
+	const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
+	const [selectedInstallments, setSelectedInstallments] = useState(4) // Cuántas quincenas eligió
+	const [userEmail, setUserEmail] = useState("") // Email del usuario
 
-  const interestRate = selectedInstallments > 6 ? 0.15 : 0 // Interes después de 5 quincenas
-  const totalWithInterest = productPrice * (1 + interestRate)
-  const paymentPerInstallment = totalWithInterest / selectedInstallments
-  const minimumPayment = Math.ceil(productPrice / 12)
+	const interestRate = selectedInstallments > 6 ? 0.15 : 0 // Interes después de 5 quincenas
+	const totalWithInterest = productPrice * (1 + interestRate)
+	const paymentPerInstallment = totalWithInterest / selectedInstallments
+	const minimumPayment = Math.ceil(productPrice / 12)
 
-  // Calcula descuento si no viene
-  const computedDiscountPercent = discountPercent ?? (
-    originalPrice && originalPrice > productPrice
-      ? Math.round(((originalPrice - productPrice) / originalPrice) * 100)
-      : null
-  )
+	// Calcula descuento si no viene
+	const computedDiscountPercent = discountPercent ?? (
+		originalPrice && originalPrice > productPrice
+			? Math.round(((originalPrice - productPrice) / originalPrice) * 100)
+			: null
+	)
 
-  // Calcula estrellas
-  const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
+	// Calcula estrellas
+	const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
 
-  // Calcula fechas de pago
-  const paymentDates = useMemo(() =>
-    Array.from({ length: Math.min(selectedInstallments, 3) }).map((_, idx) => {
-      const date = new Date()
-      date.setDate(date.getDate() + (idx + 1) * 15)
-      return date.toLocaleDateString("es-MX",{
-        day: "numeric",
-        month: "short"
-      })
-    }),
-  [selectedInstallments])
+	// Calcula fechas de pago
+	const paymentDates = useMemo(() =>
+		Array.from({ length: Math.min(selectedInstallments, 3) }).map((_, idx) => {
+			const date = new Date()
+			date.setDate(date.getDate() + (idx + 1) * 15)
+			return date.toLocaleDateString("es-MX", {
+				day: "numeric",
+				month: "short"
+			})
+		}),
+		[selectedInstallments])
 
-  // Simula verificación
-  const handleCheckEligibility = () => {
-    setState("loading")
-    window.setTimeout(() => {
-      setState(Math.random() > 0.2 ? "approved" : "rejected")
-    }, 1600)
-  }
+	// Simula verificación
+	const handleCheckEligibility = () => {
+		setState("loading")
+		window.setTimeout(() => {
+			setState(Math.random() > 0.2 ? "approved" : "rejected")
+		}, 1600)
+	}
 
-  // Reinicia widget
-  const handleStartOver = () => {
-    setState("collapsed")
-    setUserEmail("")
-  }
+	// Reinicia widget
+	const handleStartOver = () => {
+		setState("collapsed")
+		setUserEmail("")
+	}
 
-  return (
-    <div className="wk-root" aria-live="polite">
+	return (
+		<div className="wk-root" aria-live="polite">
 
-      {/* Animaciones */}
-      <AnimatePresence>
-        {state === "collapsed" && (
-          <motion.button
-            className="wk-launcher"
-            type="button"
-            initial={{ opacity: 0, scale: 0.88, y: 18 }} // inicio
-            animate={{ opacity: 1, scale: 1, y: 0 }}     // entrada
-            exit={{ opacity: 0, scale: 0.88, y: 18 }}    // salida
-            whileHover={{ scale: 1.03, y: -2 }}          // Normal
-            whileTap={{ scale: 0.98 }}                   // click
-            onClick={() => setState("expanded")}         // abrir widget
-          >
-            <CreditCard size={28} strokeWidth={2.4} />
-            <span>
-              <strong>Paga desde</strong>
-              <b>${minimumPayment.toLocaleString("es-MX")} / quincena</b>
-            </span>
-            <ChevronRight size={26} strokeWidth={2.7} />
-          </motion.button>
-        )}
-      </AnimatePresence>
+			{/* Animaciones */}
+			<AnimatePresence>
+				{state === "collapsed" && (
+					<motion.button
+						className="wk-launcher"
+						type="button"
+						initial={{ opacity: 0, scale: 0.88, y: 18 }} // inicio
+						animate={{ opacity: 1, scale: 1, y: 0 }}     // entrada
+						exit={{ opacity: 0, scale: 0.88, y: 18 }}    // salida
+						whileHover={{ scale: 1.03, y: -2 }}          // Normal
+						whileTap={{ scale: 0.98 }}                   // click
+						onClick={() => setState("expanded")}         // abrir widget
+					>
+						<CreditCard size={28} strokeWidth={2.4} />
+						<span>
+							<strong>Paga desde</strong>
+							<b>${minimumPayment.toLocaleString("es-MX")} / quincena</b>
+						</span>
+						<ChevronRight size={26} strokeWidth={2.7} />
+					</motion.button>
+				)}
+			</AnimatePresence>
 
-      {/* Panel abierto */}
-      <AnimatePresence>
-        {state !== "collapsed" && (
-          <>
-            {/* Fondo */}
-            <motion.button
-              className="wk-scrim"
-              type="button"
-              aria-label="Cerrar Kueski Pay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setState("collapsed")}
-            />
+			{/* Panel abierto */}
+			<AnimatePresence>
+				{state !== "collapsed" && (
+					<>
+						{/* Fondo */}
+						<motion.button
+							className="wk-scrim"
+							type="button"
+							aria-label="Cerrar Kueski Pay"
+							initial={{ opacity: 0 }}
+							animate={{ opacity: 1 }}
+							exit={{ opacity: 0 }}
+							onClick={() => setState("collapsed")}
+						/>
 
-            {/* Contenedor principal */}
-            <motion.section
-              className="wk-panel"
-              role="dialog"
-              aria-label="Kueski Pay"
-              initial={{ opacity: 0, scale: 0.95, y: 28 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 28 }}
-              transition={{ type: "spring", damping: 24, stiffness: 280 }}
-            >
+						{/* Contenedor principal */}
+						<motion.section
+							className="wk-panel"
+							role="dialog"
+							aria-label="Kueski Pay"
+							initial={{ opacity: 0, scale: 0.95, y: 28 }}
+							animate={{ opacity: 1, scale: 1, y: 0 }}
+							exit={{ opacity: 0, scale: 0.95, y: 28 }}
+							transition={{ type: "spring", damping: 24, stiffness: 280 }}
+						>
 
-              {/* Encabezado */}
-              <header className="wk-header">
-                <div className="wk-brand">
-                  <div className="wk-brandIcon">
-                    <CreditCard size={30} strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h2>Kueski Pay</h2>
-                    <p>Compra ahora, paga despues</p>
-                  </div>
-                </div>
+							{/* Encabezado */}
+							<header className="wk-header">
+								<div className="wk-brand">
+									<div className="wk-brandIcon">
+										<CreditCard size={30} strokeWidth={2.2} />
+									</div>
+									<div>
+										<h2>Kueski Pay</h2>
+										<p>Compra ahora, paga despues</p>
+									</div>
+								</div>
 
-                {/* Botón cerrar */}
-                <button
-                  className="wk-iconButton"
-                  type="button"
-                  aria-label="Cerrar"
-                  onClick={() => setState("collapsed")}
-                >
-                  <X size={28} />
-                </button>
-              </header>
+								{/* Botón cerrar */}
+								<button
+									className="wk-iconButton"
+									type="button"
+									aria-label="Cerrar"
+									onClick={() => setState("collapsed")}
+								>
+									<X size={28} />
+								</button>
+							</header>
 
-              <div className="wk-body">
+							<div className="wk-body">
 
-                {/* Vista principal */}
-                {state === "expanded" && (
-                  <motion.div className="wk-stack" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+								{/* Vista principal */}
+								{state === "expanded" && (
+									<motion.div className="wk-stack" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
-                    {/* Info producto */}
-                    <div className="wk-product">
+										{/* Info producto */}
+										<div className="wk-product">
 
-                      {/* Rating */}
-                      {(rating || reviewCount) && (
-                        <div className="wk-rating">
-                          {rating && <span>{"★".repeat(starCount)}</span>}
-                          {reviewCount && (
-                            <em>({reviewCount.toLocaleString("es-MX")} reseñas)</em>
-                          )}
-                        </div>
-                      )}
+											{/* Rating */}
+											{(rating || reviewCount) && (
+												<div className="wk-rating">
+													{rating && <span>{"★".repeat(starCount)}</span>}
+													{reviewCount && (
+														<em>({reviewCount.toLocaleString("es-MX")} reseñas)</em>
+													)}
+												</div>
+											)}
 
-                      <h3>{productName}</h3>
-                      {productDescription && <p>{productDescription}</p>}
+											<h3>{productName}</h3>
+											{productDescription && <p>{productDescription}</p>}
 
-                      {/* Precio */}
-                      <div className="wk-priceRow">
-                        <strong>${productPrice.toLocaleString("es-MX")}</strong>
+											{/* Precio */}
+											<div className="wk-priceRow">
+												<strong>${productPrice.toLocaleString("es-MX")}</strong>
 
-                        {originalPrice && originalPrice > productPrice && (
-                          <s>${originalPrice.toLocaleString("es-MX")}</s>
-                        )}
+												{originalPrice && originalPrice > productPrice && (
+													<s>${originalPrice.toLocaleString("es-MX")}</s>
+												)}
 
-                        {computedDiscountPercent && computedDiscountPercent > 0 && (
-                          <mark>-{computedDiscountPercent}%</mark>
-                        )}
-                      </div>
+												{computedDiscountPercent && computedDiscountPercent > 0 && (
+													<mark>-{computedDiscountPercent}%</mark>
+												)}
+											</div>
 
-                      {/* Línea Kueski */}
-                      <div className="wk-kueskiLine">
-                        <CreditCard size={22} />
-                        O desde ${minimumPayment.toLocaleString("es-MX")} quincenales con Kueski
-                      </div>
-                    </div>
+											{/* Línea Kueski */}
+											<div className="wk-kueskiLine">
+												<CreditCard size={22} />
+												O desde ${minimumPayment.toLocaleString("es-MX")} quincenales con Kueski
+											</div>
+										</div>
 
-                    {/* Envio */}
-                    <div className="wk-perks">
-                      <Perk icon={<Truck size={24} />} title="Envio gratis" text="Llega mañana" />
-                      <Perk icon={<Shield size={24} />} title="Garantia extendida" text="2 años" />
-                    </div>
+										{/* Envio */}
+										<div className="wk-perks">
+											<Perk icon={<Truck size={24} />} title="Envio gratis" text="Llega mañana" />
+											<Perk icon={<Shield size={24} />} title="Garantia extendida" text="2 años" />
+										</div>
 
-                    {/* Beneficios */}
-                    <div className="wk-benefitGrid">
-                      <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de credito" />
-                      <BenefitCard icon={<Zap size={22} />} text="Aprobacion instantanea" />
-                      <BenefitCard icon={<CheckCircle2 size={22} />} text="100% digital" />
-                      <BenefitCard icon={<Gift size={22} />} text="Cashback disponible" />
-                    </div>
+										{/* Beneficios */}
+										<div className="wk-benefitGrid">
+											<BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de credito" />
+											<BenefitCard icon={<Zap size={22} />} text="Aprobacion instantanea" />
+											<BenefitCard icon={<CheckCircle2 size={22} />} text="100% digital" />
+											<BenefitCard icon={<Gift size={22} />} text="Cashback disponible" />
+										</div>
 
-                    {/* Ir al simulador */}
-                    <button className="wk-primary" type="button" onClick={() => setState("simulator")}>
-                      <ShoppingCart size={24} />
-                      Ver opciones de pago
-                    </button>
+										{/* Ir al simulador */}
+										<button className="wk-primary" type="button" onClick={() => setState("simulator")}>
+											<ShoppingCart size={24} />
+											Ver opciones de pago
+										</button>
 
-                    <p className="wk-note">Sin pago inicial · Intereses desde 0%</p>
-                  </motion.div>
-                )}
+										<p className="wk-note">Sin pago inicial · Intereses desde 0%</p>
+									</motion.div>
+								)}
 
-                {/* Simulador */}
-                {state === "simulator" && (
-                  <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
+								{/* Simulador */}
+								{state === "simulator" && (
+									<motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
 
-                    <h3 className="wk-sectionTitle">
-                      Selecciona la cantidad de quincenas de tu preferencia a pagar:
-                    </h3>
+										<h3 className="wk-sectionTitle">
+											Selecciona la cantidad de quincenas de tu preferencia a pagar:
+										</h3>
 
-                    {/* Botones de pagos */}
-                    <div className="wk-installments">
-                      {installmentOptions.map((num) => (
-                        <button
-                          key={num}
-                          className={selectedInstallments === num ? "wk-installment wk-selected" : "wk-installment"}
-                          type="button"
-                          onClick={() => setSelectedInstallments(num)}
-                        >
-                          {num}
-                        </button>
-                      ))}
-                    </div>
+										{/* Botones de pagos */}
+										<div className="wk-installments">
+											{installmentOptions.map((num) => (
+												<button
+													key={num}
+													className={selectedInstallments === num ? "wk-installment wk-selected" : "wk-installment"}
+													type="button"
+													onClick={() => setSelectedInstallments(num)}
+												>
+													{num}
+												</button>
+											))}
+										</div>
 
-                    {/* Resumen */}
-                    <div className="wk-summary">
-                      <p>Pagaras por quincena</p>
-                      <strong>${Math.ceil(paymentPerInstallment).toLocaleString("es-MX")}</strong>
-                    </div>
+										{/* Resumen */}
+										<div className="wk-summary">
+											<p>Pagaras por quincena</p>
+											<strong>${Math.ceil(paymentPerInstallment).toLocaleString("es-MX")}</strong>
+										</div>
 
-                    {/* Input email */}
-                    <label className="wk-field">
-                      <span>Correo electronico</span>
-                      <input
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={userEmail}
-                        onChange={(event) => setUserEmail(event.target.value)}
-                      />
-                    </label>
+										{/* Input email */}
+										<label className="wk-field">
+											<span>Correo electronico</span>
+											<input
+												type="email"
+												placeholder="tu@email.com"
+												value={userEmail}
+												onChange={(event) => setUserEmail(event.target.value)}
+											/>
+										</label>
 
-                    {/* Acciones */}
-                    <div className="wk-actions">
-                      <button className="wk-secondary" type="button" onClick={() => setState("expanded")}>
-                        Atras
-                      </button>
-                      <button
-                        className="wk-primary"
-                        type="button"
-                        disabled={!userEmail}
-                        onClick={handleCheckEligibility}
-                      >
-                        Verificar elegibilidad
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
+										{/* Acciones */}
+										<div className="wk-actions">
+											<button className="wk-secondary" type="button" onClick={() => setState("expanded")}>
+												Atras
+											</button>
+											<button
+												className="wk-primary"
+												type="button"
+												disabled={!userEmail}
+												onClick={handleCheckEligibility}
+											>
+												Verificar elegibilidad
+											</button>
+										</div>
+									</motion.div>
+								)}
 
-                {/* Cargando */}
-                {state === "loading" && (
-                  <motion.div className="wk-state">
-                    <h3>Verificando tu elegibilidad...</h3>
-                  </motion.div>
-                )}
+								{/* Cargando */}
+								{state === "loading" && (
+									<motion.div className="wk-state">
+										<h3>Verificando tu elegibilidad...</h3>
+									</motion.div>
+								)}
 
-                {/* Aprovado */}
-                {state === "approved" && (
-                  <ResultState
-                    tone="success"
-                    icon={<CheckCircle2 size={58} />}
-                    title="Aprobado!"
-                    text="Tu credito ha sido pre-aprobado"
-                  >
-                    <button className="wk-primary" onClick={() => setState("confirmation")}>
-                      Confirmar compra
-                    </button>
-                  </ResultState>
-                )}
+								{/* Aprovado */}
+								{state === "approved" && (
+									<ResultState
+										tone="success"
+										icon={<CheckCircle2 size={58} />}
+										title="Aprobado!"
+										text="Tu credito ha sido pre-aprobado"
+									>
+										<button className="wk-primary" onClick={() => setState("confirmation")}>
+											Confirmar compra
+										</button>
+									</ResultState>
+								)}
 
-                {/* Rechazado */}
-                {state === "rejected" && (
-                  <ResultState
-                    tone="danger"
-                    icon={<XCircle size={58} />}
-                    title="No aprobado"
-                    text="Intenta despues"
-                  >
-                    <button onClick={handleStartOver}>Cerrar</button>
-                  </ResultState>
-                )}
+								{/* Rechazado */}
+								{state === "rejected" && (
+									<ResultState
+										tone="danger"
+										icon={<XCircle size={58} />}
+										title="No aprobado"
+										text="Intenta despues"
+									>
+										<button onClick={handleStartOver}>Cerrar</button>
+									</ResultState>
+								)}
 
-              </div>
-            </motion.section>
-          </>
-        )}
-      </AnimatePresence>
-    </div>
-  )
+							</div>
+						</motion.section>
+					</>
+				)}
+			</AnimatePresence>
+		</div>
+	)
 }
 
 // Tarjeta beneficio
-function BenefitCard({icon,text}: { icon: ReactNode; text: string }) {
-  return (
-    <div className="wk-benefit">
-      {icon}
-      <span>{text}</span>
-    </div>
-  )
+function BenefitCard({ icon, text }: { icon: ReactNode; text: string }) {
+	return (
+		<div className="wk-benefit">
+			{icon}
+			<span>{text}</span>
+		</div>
+	)
 }
 
 // Beneficio pequeño
-function Perk({icon,title,text}: {
-  icon: ReactNode
-  title: string
-  text: string
-}){
-  return (
-    <div className="wk-perk">
-      {icon}
-      <span>
-        <strong>{title}</strong> - {text}
-      </span>
-    </div>
-  )
+function Perk({ icon, title, text }: {
+	icon: ReactNode
+	title: string
+	text: string
+}) {
+	return (
+		<div className="wk-perk">
+			{icon}
+			<span>
+				<strong>{title}</strong> - {text}
+			</span>
+		</div>
+	)
 }
 
 // Fila label/valor
 function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="wk-row">
-      <span>{label}</span>
-      <b>{value}</b>
-    </div>
-  )
+	return (
+		<div className="wk-row">
+			<span>{label}</span>
+			<b>{value}</b>
+		</div>
+	)
 }
 
 // Resultado (aprobado/rechazado)
-function ResultState({children,icon,text,title,tone}:{
-  children: ReactNode
-  icon: ReactNode
-  text: string
-  title: string
-  tone: "danger" | "success"
-}){
-  return (
-    <motion.div className="wk-state">
-      <div className={`wk-resultIcon wk-${tone}`}>{icon}</div>
-      <h3>{title}</h3>
-      <p>{text}</p>
-      {children}
-    </motion.div>
-  )
+function ResultState({ children, icon, text, title, tone }: {
+	children: ReactNode
+	icon: ReactNode
+	text: string
+	title: string
+	tone: "danger" | "success"
+}) {
+	return (
+		<motion.div className="wk-state">
+			<div className={`wk-resultIcon wk-${tone}`}>{icon}</div>
+			<h3>{title}</h3>
+			<p>{text}</p>
+			{children}
+		</motion.div>
+	)
 }
