@@ -3,7 +3,7 @@ import { AnimatePresence, motion } from "motion/react" // Importa animaciones
 import type { ReactNode } from "react"
 import { useMemo, useState } from "react"
 
-// Estados posibles del widget
+// Estados posibles del widget <- maybe lol
 type WidgetState =
 	| "collapsed"
 	| "expanded"
@@ -25,13 +25,16 @@ interface FloatingFinanceWidgetProps {
 }
 
 const installmentOptions = [1, 2, 3, 4, 6, 8, 10, 12]
+const min_stallments = 3;
+const random_ratio = 0.2;
+const timeout_for_loading = 1200;
 
 export function FloatingFinanceWidget({ productPrice, productName = "Este producto", productDescription, originalPrice, discountPercent, rating, reviewCount }: FloatingFinanceWidgetProps) {
-	const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
-	const [selectedInstallments, setSelectedInstallments] = useState(4) // Cuántas quincenas eligió
-	const [userEmail, setUserEmail] = useState("") // Email del usuario
+	const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget <- no shit
+	const [selectedInstallments, setSelectedInstallments] = useState(4) // Cuántas quincenas eligió <- for real?
+	const [userEmail, setUserEmail] = useState("") // Email del usuario <- are you sure?...
 
-	const interestRate = selectedInstallments > 6 ? 0.15 : 0 // Interes después de 5 quincenas
+	const interestRate = selectedInstallments > 6 ? 0.15 : 0 // Interest rate increase after 5 stallments 
 	const totalWithInterest = productPrice * (1 + interestRate)
 	const paymentPerInstallment = totalWithInterest / selectedInstallments
 	const minimumPayment = Math.ceil(productPrice / 12)
@@ -48,7 +51,7 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 
 	// Calcula fechas de pago
 	const paymentDates = useMemo(() =>
-		Array.from({ length: Math.min(selectedInstallments, 3) }).map((_, idx) => {
+		Array.from({ length: Math.min(selectedInstallments, min_stallments) }).map((_, idx) => {
 			const date = new Date()
 			date.setDate(date.getDate() + (idx + 1) * 15)
 			return date.toLocaleDateString("es-MX", {
@@ -62,11 +65,11 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 	const handleCheckEligibility = () => {
 		setState("loading")
 		window.setTimeout(() => {
-			setState(Math.random() > 0.2 ? "approved" : "rejected")
-		}, 1600)
+			setState(Math.random() > random_ratio ? "approved" : "rejected")
+		}, timeout_for_loading)
 	}
 
-	// Reinicia widget
+	// Returns the widget to the inital state
 	const handleStartOver = () => {
 		setState("collapsed")
 		setUserEmail("")
@@ -75,7 +78,6 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 	return (
 		<div className="wk-root" aria-live="polite">
 
-			{/* Animaciones */}
 			<AnimatePresence>
 				{state === "collapsed" && (
 					<motion.button
@@ -98,11 +100,9 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 				)}
 			</AnimatePresence>
 
-			{/* Panel abierto */}
 			<AnimatePresence>
 				{state !== "collapsed" && (
 					<>
-						{/* Fondo */}
 						<motion.button
 							className="wk-scrim"
 							type="button"
@@ -113,7 +113,6 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 							onClick={() => setState("collapsed")}
 						/>
 
-						{/* Contenedor principal */}
 						<motion.section
 							className="wk-panel"
 							role="dialog"
@@ -124,7 +123,6 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 							transition={{ type: "spring", damping: 24, stiffness: 280 }}
 						>
 
-							{/* Encabezado */}
 							<header className="wk-header">
 								<div className="wk-brand">
 									<div className="wk-brandIcon">
@@ -136,7 +134,6 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 									</div>
 								</div>
 
-								{/* Botón cerrar */}
 								<button
 									className="wk-iconButton"
 									type="button"
@@ -149,14 +146,10 @@ export function FloatingFinanceWidget({ productPrice, productName = "Este produc
 
 							<div className="wk-body">
 
-								{/* Vista principal */}
 								{state === "expanded" && (
 									<motion.div className="wk-stack" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
 
-										{/* Info producto */}
 										<div className="wk-product">
-
-											{/* Rating */}
 											{(rating || reviewCount) && (
 												<div className="wk-rating">
 													{rating && <span>{"★".repeat(starCount)}</span>}
