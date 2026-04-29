@@ -1,5 +1,5 @@
 import {
-  CheckCircle2, ChevronRight, CreditCard,
+  CheckCircle2, ChevronRight, Clock, CreditCard,
   Gift, Shield, ShoppingCart, Truck, X, XCircle, Zap
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
@@ -21,7 +21,7 @@ interface FloatingFinanceWidgetProps {
 
 const availble_amount_of_installments = 12;
 const installmentOptions = Array.from({ length: availble_amount_of_installments }, (_, i) => i + 1)
-const min_stallments = 4;
+const min_stallments = 12;
 const random_ratio = 0.2;
 const timeout_for_loading = 1200;
 
@@ -36,9 +36,9 @@ export function FloatingFinanceWidget({
   const [userEmail, setUserEmail] = useState("") // Email del usuario <- are you sure?...
 
   const interestRate = selectedInstallments > 6 ? 0.15 : 0 // Interest rate increase after 5 stallments 
-  const totalWithInterest = productPrice * (1 + interestRate)
+  const totalWithInterest = Math.ceil(productPrice * (1 + interestRate))
   const paymentPerInstallment = totalWithInterest / selectedInstallments
-  const minimumPayment = Math.ceil(productPrice / availble_amount_of_installments)
+  const minimumPayment = Math.ceil((productPrice * (1 + interestRate)) / availble_amount_of_installments) 
 
   const computedDiscountPercent = discountPercent ?? (
     originalPrice && originalPrice > productPrice
@@ -213,9 +213,37 @@ export function FloatingFinanceWidget({
                       ))}
                     </div>
 
-                    <div className="wk-summary">
+                     <div className="wk-summary">
                       <p>Pagaras por quincena</p>
-                      <strong>${Math.ceil(paymentPerInstallment).toLocaleString("es-MX")}</strong>
+                      <strong>
+                        $
+                        {Math.ceil(paymentPerInstallment).toLocaleString(
+                          "es-MX"
+                        )}
+                      </strong>
+                      <dl>
+                        <div>
+                          <dt>Numero de pagos:</dt>
+                          <dd>{selectedInstallments} quincenas</dd>
+                        </div>
+                        <div>
+                          <dt>Interes:</dt>
+                          <dd>
+                            {interestRate === 0
+                              ? "0% (Sin intereses)"
+                              : `${(interestRate * 100).toFixed(0)}%`}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt>Total a pagar:</dt>
+                          <dd>
+                            $
+                            {Math.ceil(totalWithInterest).toLocaleString(
+                              "es-MX"
+                            )}
+                          </dd>
+                        </div>
+                      </dl>
                     </div>
                     <label className="wk-field">
                       <span>Correo electronico</span>
@@ -243,9 +271,23 @@ export function FloatingFinanceWidget({
                   </motion.div>
                 )}
 
-                {state === "loading" && (
-                  <motion.div className="wk-state">
+                 {state === "loading" && (
+                  <motion.div
+                    className="wk-state"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}>
+                    <motion.div
+                      className="wk-spinner"
+                      animate={{ rotate: 360 }}
+                      transition={{
+                        duration: 1,
+                        repeat: Infinity,
+                        ease: "linear"
+                      }}>
+                      <Clock size={64} />
+                    </motion.div>
                     <h3>Verificando tu elegibilidad...</h3>
+                    <p>Esto solo tomara unos segundos</p>
                   </motion.div>
                 )}
 
@@ -291,7 +333,9 @@ export function FloatingFinanceWidget({
                     title="No aprobado"
                     text="Intenta despues"
                   >
-                    <button onClick={handleStartOver}>Cerrar</button>
+                    <button
+className="wk-secondary" type="button" 
+                      onClick={handleStartOver}>Cerrar</button>
                   </ResultState>
                 )}
 
@@ -302,8 +346,8 @@ export function FloatingFinanceWidget({
                     title="Compra confirmada!"
                     text="Recibiras un correo con los detalles de tu financiamiento">
                     <div className="wk-summary wk-calendar">
-                      <p>Tu calendario de pagos</p>
-                      {paymentDates.map((date, idx) => (
+                      <p style={{color: "#fff"}}>Tu calendario de pagos</p>
+                      {paymentDates.slice(0, 4).map((date, idx) => (
                         <div className="wk-calendarRow" key={date}>
                           <span>Pago {idx + 1}</span>
                           <b>
@@ -315,8 +359,8 @@ export function FloatingFinanceWidget({
                           <em>{date}</em>
                         </div>
                       ))}
-                      {selectedInstallments > 3 && (
-                        <small>+{selectedInstallments - 3} pagos mas</small>
+                      {selectedInstallments > 4 && (
+                        <small>+{selectedInstallments - 4} pagos mas</small>
                       )}
                     </div>
                     <button
