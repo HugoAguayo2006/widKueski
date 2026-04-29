@@ -35,11 +35,14 @@ export function FloatingFinanceWidget({
   const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Cuántas quincenas eligió <- for real?
   const [userEmail, setUserEmail] = useState("") // Email del usuario <- are you sure?...
 
-  const interestRate = selectedInstallments > 6 ? 0.15 : 0 // Interest rate increase after 5 stallments 
-  const totalWithInterest = Math.ceil(productPrice * (1 + interestRate))
-  const paymentPerInstallment = totalWithInterest / selectedInstallments
-  const minimumPayment = Math.ceil((productPrice * (1 + interestRate)) / availble_amount_of_installments) 
+  const interest= 0.025; //Interest per fortnite
 
+  const hasInterest = selectedInstallments > 6; 
+  const totalWithInterest = hasInterest ? Math.ceil(productPrice * Math.pow(1 + interest, selectedInstallments)) : productPrice;
+  const paymentPerInstallment = Math.ceil(totalWithInterest / selectedInstallments);
+  const minimumPayment = Math.ceil(totalWithInterest / availble_amount_of_installments);
+
+  const interestPercent = hasInterest ? ((totalWithInterest - productPrice) / productPrice) * 100 : 0;
   const computedDiscountPercent = discountPercent ?? (
     originalPrice && originalPrice > productPrice
       ? Math.round(((originalPrice - productPrice) / originalPrice) * 100)
@@ -227,12 +230,13 @@ export function FloatingFinanceWidget({
                           <dd>{selectedInstallments} quincenas</dd>
                         </div>
                         <div>
-                          <dt>Interes:</dt>
-                          <dd>
-                            {interestRate === 0
-                              ? "0% (Sin intereses)"
-                              : `${(interestRate * 100).toFixed(0)}%`}
-                          </dd>
+                          <dt>Interés:</dt>
+
+              <dd>
+  {!hasInterest
+    ? "0% (Sin intereses)"
+    : `${interestPercent.toFixed(0)}%`}
+</dd>
                         </div>
                         <div>
                           <dt>Total a pagar:</dt>
@@ -334,7 +338,7 @@ export function FloatingFinanceWidget({
                     text="Intenta despues"
                   >
                     <button
-className="wk-secondary" type="button" 
+                      className="wk-secondary" type="button" 
                       onClick={handleStartOver}>Cerrar</button>
                   </ResultState>
                 )}
