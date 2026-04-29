@@ -4,7 +4,7 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 
 type WidgetState = | "collapsed" | "expanded" | "simulator" | "loading"
   | "approved" | "rejected" | "confirmation"
@@ -56,6 +56,17 @@ export function FloatingFinanceWidget({
     }, timeout_for_loading)
   }
 
+  const paymentDates = useMemo(() =>
+    Array.from({ length: Math.min(selectedInstallments, min_stallments) }).map((_, idx) => {
+      const date = new Date()
+      date.setDate(date.getDate() + (idx + 1) * 15)
+      return date.toLocaleDateString("es-MX", {
+        day: "numeric",
+        month: "short"
+      })
+    }),
+    [selectedInstallments])
+
   // Returns the widget to the inital state
   const handleStartOver = () => {
     setState("collapsed")
@@ -69,12 +80,12 @@ export function FloatingFinanceWidget({
           <motion.button
             className="wk-launcher"
             type="button"
-            initial={{ opacity: 0, scale: 0.88, y: 18 }} // inicio
-            animate={{ opacity: 1, scale: 1, y: 0 }}     // entrada
-            exit={{ opacity: 0, scale: 0.88, y: 18 }}    // salida
-            whileHover={{ scale: 1.03, y: -2 }}          // Normal
-            whileTap={{ scale: 0.98 }}                   // click
-            onClick={() => setState("expanded")}         // abrir widget
+            initial={{ opacity: 0, scale: 0.88, y: 18 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.88, y: 18 }}
+            whileHover={{ scale: 1.03, y: -2 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => setState("expanded")}
           >
             <CreditCard size={28} strokeWidth={2.4} />
             <span>
@@ -243,10 +254,32 @@ export function FloatingFinanceWidget({
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
                     title="Aprobado!"
-                    text="Tu credito ha sido pre-aprobado"
-                  >
-                    <button className="wk-primary" onClick={() => setState("confirmation")}>
-                      Confirmar compra
+                    text="Tu credito ha sido pre-aprobado">
+                    <div className="wk-receipt">
+                      <p>Resumen de tu compra</p>
+                      <Row label="Producto:" value={productName} />
+                      <Row
+                        label="Plan de pago:"
+                        value={`${selectedInstallments} quincenas`}
+                      />
+                      <Row
+                        label="Pago quincenal:"
+                        value={`$${Math.ceil(
+                          paymentPerInstallment
+                        ).toLocaleString("es-MX")}`}
+                      />
+                    </div>
+                    <button
+                      className="wk-primary"
+                      type="button"
+                      onClick={() => setState("confirmation")}>
+                      Confirmar compra con Kueski
+                    </button>
+                    <button
+                      className="wk-linkButton"
+                      type="button"
+                      onClick={() => setState("simulator")}>
+                      Modificar plan
                     </button>
                   </ResultState>
                 )}
@@ -259,6 +292,39 @@ export function FloatingFinanceWidget({
                     text="Intenta despues"
                   >
                     <button onClick={handleStartOver}>Cerrar</button>
+                  </ResultState>
+                )}
+
+                {state === "confirmation" && (
+                  <ResultState
+                    tone="success"
+                    icon={<CheckCircle2 size={58} />}
+                    title="Compra confirmada!"
+                    text="Recibiras un correo con los detalles de tu financiamiento">
+                    <div className="wk-summary wk-calendar">
+                      <p>Tu calendario de pagos</p>
+                      {paymentDates.map((date, idx) => (
+                        <div className="wk-calendarRow" key={date}>
+                          <span>Pago {idx + 1}</span>
+                          <b>
+                            $
+                            {Math.ceil(paymentPerInstallment).toLocaleString(
+                              "es-MX"
+                            )}
+                          </b>
+                          <em>{date}</em>
+                        </div>
+                      ))}
+                      {selectedInstallments > 3 && (
+                        <small>+{selectedInstallments - 3} pagos mas</small>
+                      )}
+                    </div>
+                    <button
+                      className="wk-primary"
+                      type="button"
+                      onClick={handleStartOver}>
+                      Cerrar
+                    </button>
                   </ResultState>
                 )}
               </div>
@@ -290,6 +356,16 @@ function Perk({ icon, title, text }: {
       <span>
         <strong>{title}</strong> - {text}
       </span>
+    </div>
+  )
+}
+
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="wk-row">
+      <span>{label}</span>
+      <b>{value}</b>
     </div>
   )
 }
