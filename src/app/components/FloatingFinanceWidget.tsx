@@ -20,7 +20,7 @@ interface FloatingFinanceWidgetProps {
 }
 
 const availble_amount_of_installments = 12;
-const installmentOptions = Array.from({ length: availble_amount_of_installments + 1 }, (_, i) => i)
+const installmentOptions = Array.from({ length: availble_amount_of_installments }, (_, i) => i + 1)
 const min_stallments = 4;
 const random_ratio = 0.2;
 const timeout_for_loading = 1200;
@@ -144,11 +144,9 @@ export function FloatingFinanceWidget({
                           )}
                         </div>
                       )}
-
                       <h3>{productName}</h3>
                       {productDescription && <p>{productDescription}</p>}
 
-                      {/* Precio */}
                       <div className="wk-priceRow">
                         <strong>${productPrice.toLocaleString("es-MX")}</strong>
 
@@ -161,28 +159,21 @@ export function FloatingFinanceWidget({
                         )}
                       </div>
 
-                      {/* Línea Kueski */}
                       <div className="wk-kueskiLine">
                         <CreditCard size={22} />
                         O desde ${minimumPayment.toLocaleString("es-MX")} quincenales con Kueski
                       </div>
                     </div>
-
-                    {/* Envio */}
                     <div className="wk-perks">
                       <Perk icon={<Truck size={24} />} title="Envio gratis" text="Llega mañana" />
                       <Perk icon={<Shield size={24} />} title="Garantia extendida" text="2 años" />
                     </div>
-
-                    {/* Beneficios */}
                     <div className="wk-benefitGrid">
                       <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de credito" />
                       <BenefitCard icon={<Zap size={22} />} text="Aprobacion instantanea" />
                       <BenefitCard icon={<CheckCircle2 size={22} />} text="100% digital" />
                       <BenefitCard icon={<Gift size={22} />} text="Cashback disponible" />
                     </div>
-
-                    {/* Ir al simulador */}
                     <button className="wk-primary" type="button" onClick={() => setState("simulator")}>
                       <ShoppingCart size={24} />
                       Ver opciones de pago
@@ -192,15 +183,12 @@ export function FloatingFinanceWidget({
                   </motion.div>
                 )}
 
-                {/* Simulador */}
                 {state === "simulator" && (
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
 
                     <h3 className="wk-sectionTitle">
                       Selecciona la cantidad de quincenas de tu preferencia a pagar:
                     </h3>
-
-                    {/* Botones de pagos */}
                     <div className="wk-installments">
                       {installmentOptions.map((num) => (
                         <button
@@ -214,13 +202,10 @@ export function FloatingFinanceWidget({
                       ))}
                     </div>
 
-                    {/* Resumen */}
                     <div className="wk-summary">
                       <p>Pagaras por quincena</p>
                       <strong>${Math.ceil(paymentPerInstallment).toLocaleString("es-MX")}</strong>
                     </div>
-
-                    {/* Input email */}
                     <label className="wk-field">
                       <span>Correo electronico</span>
                       <input
@@ -231,7 +216,6 @@ export function FloatingFinanceWidget({
                       />
                     </label>
 
-                    {/* Acciones */}
                     <div className="wk-actions">
                       <button className="wk-secondary" type="button" onClick={() => setState("expanded")}>
                         Atras
@@ -248,14 +232,12 @@ export function FloatingFinanceWidget({
                   </motion.div>
                 )}
 
-                {/* Cargando */}
                 {state === "loading" && (
                   <motion.div className="wk-state">
                     <h3>Verificando tu elegibilidad...</h3>
                   </motion.div>
                 )}
 
-                {/* Aprovado */}
                 {state === "approved" && (
                   <ResultState
                     tone="success"
@@ -269,7 +251,6 @@ export function FloatingFinanceWidget({
                   </ResultState>
                 )}
 
-                {/* Rechazado */}
                 {state === "rejected" && (
                   <ResultState
                     tone="danger"
@@ -280,7 +261,6 @@ export function FloatingFinanceWidget({
                     <button onClick={handleStartOver}>Cerrar</button>
                   </ResultState>
                 )}
-
               </div>
             </motion.section>
           </>
@@ -313,6 +293,7 @@ function Perk({ icon, title, text }: {
     </div>
   )
 }
+
 
 function ResultState({ children, icon, text, title, tone }: {
   children: ReactNode
