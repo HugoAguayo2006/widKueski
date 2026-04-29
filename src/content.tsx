@@ -98,6 +98,7 @@ export default function ContentWidget() {
 
 /// All the helper methods are based on amazon DOM structure if other website were to
 /// use similar structure it might work but the output is undefined behavior
+
 function detectSingleProduct(): ProductInfo | null {
   const amazonProduct = getAmazonProduct()
   if (amazonProduct) {
@@ -105,34 +106,23 @@ function detectSingleProduct(): ProductInfo | null {
   }
 
   const structuredProduct = getStructuredProduct()
-
-  if (structuredProduct) {
-    return structuredProduct
-  }
+  if (structuredProduct) { return structuredProduct }
 
   const name = getProductName()
   const price = getProductPrice()
   const originalPrice = getOriginalPrice()
-
-  if (!name || !price || !looksLikeProductPage()) {
-    return null
-  }
+  if (!name || !price || !looksLikeProductPage()) { return null }
 
   return {
     description: getProductDescription(),
     discountPercent: getDiscountPercent(price, originalPrice),
-    name,
-    originalPrice,
-    price,
-    rating: getProductRating(),
+    name, originalPrice, price, rating: getProductRating(),
     reviewCount: getProductReviewCount()
   }
 }
 
 function getAmazonProduct(): ProductInfo | null {
-  if (!location.hostname.includes("amazon.")) {
-    return null
-  }
+  if (!location.hostname.includes("amazon.")) { return null }
   const name = normalizeText(
     document.querySelector<HTMLElement>("#productTitle")?.textContent
   )
@@ -140,9 +130,7 @@ function getAmazonProduct(): ProductInfo | null {
   const originalPrice = getAmazonOriginalPrice(price)
   const discountPercent = getAmazonDiscountPercent(price, originalPrice)
 
-  if (!name || !price || !looksLikeAmazonProductPage()) {
-    return null
-  }
+  if (!name || !price || !looksLikeAmazonProductPage()) { return null }
 
   return {
     description: getAmazonDescription(), discountPercent,
@@ -198,11 +186,7 @@ function collectStructuredProducts(value: unknown, products: ProductInfo[]) {
     products.push({
       description: normalizeText(getString(record.description)) || undefined,
       discountPercent: getDiscountPercent(price, originalPrice),
-      name,
-      originalPrice,
-      price,
-      rating,
-      reviewCount
+      name, originalPrice, price, rating, reviewCount
     })
   }
 }
@@ -260,10 +244,7 @@ function getProductRating(): number | null {
     getMetaContent('meta[itemprop="ratingValue"]') ||
     getMetaContent('meta[property="product:rating:value"]')
   const parsedMetaRating = parseRating(metaRating)
-
-  if (parsedMetaRating) {
-    return parsedMetaRating
-  }
+  if (parsedMetaRating) { return parsedMetaRating }
 
   const selectors = [
     '[itemprop="ratingValue"]',
@@ -275,10 +256,7 @@ function getProductRating(): number | null {
 
   for (const selector of selectors) {
     const rating = parseRating(getElementTextWithAttributes(selector))
-
-    if (rating) {
-      return rating
-    }
+    if (rating) { return rating }
   }
 
   return null
@@ -307,10 +285,7 @@ function getProductReviewCount(): number | null {
 
   for (const selector of selectors) {
     const count = parseCount(getElementTextWithAttributes(selector))
-
-    if (count) {
-      return count
-    }
+    if (count) { return count }
   }
 
   return null
@@ -321,11 +296,9 @@ function getProductPrice(): number | null {
     getMetaContent('meta[property="product:price:amount"]') ||
     getMetaContent('meta[property="og:price:amount"]') ||
     getMetaContent('meta[itemprop="price"]')
-  const parsedMetaPrice = parsePrice(metaPrice)
 
-  if (parsedMetaPrice) {
-    return parsedMetaPrice
-  }
+  const parsedMetaPrice = parsePrice(metaPrice)
+  if (parsedMetaPrice) { return parsedMetaPrice }
 
   const selectors = [
     "#priceblock_ourprice",
@@ -365,11 +338,9 @@ function getOriginalPrice(): number | null {
   const metaPrice =
     getMetaContent('meta[property="product:original_price:amount"]') ||
     getMetaContent('meta[property="og:price:standard_amount"]')
-  const parsedMetaPrice = parsePrice(metaPrice)
 
-  if (parsedMetaPrice) {
-    return parsedMetaPrice
-  }
+  const parsedMetaPrice = parsePrice(metaPrice)
+  if (parsedMetaPrice) { return parsedMetaPrice }
 
   const selectors = [
     '[data-testid="product-original-price"]',
@@ -385,10 +356,7 @@ function getOriginalPrice(): number | null {
   for (const selector of selectors) {
     const element = document.querySelector<HTMLElement>(selector)
     const price = parsePrice(element?.textContent)
-
-    if (price && isVisible(element)) {
-      return price
-    }
+    if (price && isVisible(element)) { return price }
   }
 
   return null
@@ -411,20 +379,19 @@ function getAmazonPrice(): number | null {
     const price = parsePrice(
       document.querySelector<HTMLElement>(selector)?.textContent
     )
-
-    if (price) {
-      return price
-    }
+    if (price) { return price }
   }
 
   const whole = normalizeText(
     document.querySelector<HTMLElement>(
-      "#corePriceDisplay_desktop_feature_div .a-price-whole, #apex_desktop .a-price-whole, #buybox .a-price-whole"
+      "#corePriceDisplay_desktop_feature_div .a-price-whole, \
+      #apex_desktop .a-price-whole, #buybox .a-price-whole"
     )?.textContent
   )
   const fraction = normalizeText(
     document.querySelector<HTMLElement>(
-      "#corePriceDisplay_desktop_feature_div .a-price-fraction, #apex_desktop .a-price-fraction, #buybox .a-price-fraction"
+      "#corePriceDisplay_desktop_feature_div .a-price-fraction, \
+      #apex_desktop .a-price-fraction, #buybox .a-price-fraction"
     )?.textContent
   )
 
@@ -470,11 +437,7 @@ function getAmazonDiscountPercent(
     )?.textContent
   )
   const explicitDiscount = parsePercent(discountText)
-
-  if (explicitDiscount) {
-    return explicitDiscount
-  }
-
+  if (explicitDiscount) { return explicitDiscount }
   return getDiscountPercent(currentPrice, originalPrice)
 }
 
@@ -523,7 +486,6 @@ function looksLikeProductPage() {
     'button[aria-label*="cart" i]',
     '[data-testid*="add-to-cart" i]'
   ]
-
   return productSignals.some((selector) => document.querySelector(selector))
 }
 
@@ -542,19 +504,13 @@ function getOfferInfo(offers: unknown): {
   originalPrice: number | null
   price: number | null
 } {
-  if (!offers) {
-    return { originalPrice: null, price: null }
-  }
+  if (!offers) { return { originalPrice: null, price: null } }
 
   if (Array.isArray(offers)) {
     for (const offer of offers) {
       const offerInfo = getOfferInfo(offer)
-
-      if (offerInfo.price) {
-        return offerInfo
-      }
+      if (offerInfo.price) { return offerInfo }
     }
-
     return { originalPrice: null, price: null }
   }
 
@@ -571,25 +527,15 @@ function getOfferInfo(offers: unknown): {
     getString(record.priceSpecification) ||
     getString(record.listPrice)
   )
-
-  return {
-    originalPrice,
-    price
-  }
+  return { originalPrice, price }
 }
 
 function parsePrice(value?: string | null): number | null {
-  if (!value) {
-    return null
-  }
-
+  if (!value) { return null }
   const match = value.match(
     /(?:MXN|MEX\$|\$)?\s*([0-9]{1,3}(?:[,.][0-9]{3})*(?:[,.][0-9]{2})?|[0-9]+(?:[,.][0-9]{2})?)/i
   )
-
-  if (!match) {
-    return null
-  }
+  if (!match) { return null }
 
   const numericText = match[1]
   const normalized =
@@ -611,7 +557,6 @@ function getDiscountPercent(
   if (!currentPrice || !originalPrice || originalPrice <= currentPrice) {
     return null
   }
-
   return Math.round(((originalPrice - currentPrice) / originalPrice) * 100)
 }
 
@@ -625,10 +570,7 @@ function getRatingValue(value: unknown): number | null {
 }
 
 function getReviewCount(value: unknown): number | null {
-  if (!value || typeof value !== "object") {
-    return null
-  }
-
+  if (!value || typeof value !== "object") { return null }
   const record = value as Record<string, unknown>
   return parseCount(
     getString(record.reviewCount) || getString(record.ratingCount)
@@ -636,48 +578,27 @@ function getReviewCount(value: unknown): number | null {
 }
 
 function parseCount(value?: string | null): number | null {
-  if (!value) {
-    return null
-  }
-
+  if (!value) { return null }
   const match = value.replace(/\s/g, "").match(/([0-9][0-9,.]*)/)
-
-  if (!match) {
-    return null
-  }
-
+  if (!match) { return null }
   const count = Number(match[1].replace(/[,.]/g, ""))
 
   return Number.isFinite(count) && count > 0 ? count : null
 }
 
 function parsePercent(value?: string | null): number | null {
-  if (!value) {
-    return null
-  }
-
+  if (!value) { return null }
   const match = value.match(/-?\s*([0-9]{1,3})\s*%/)
-
-  if (!match) {
-    return null
-  }
-
+  if (!match) { return null }
   const percent = Number(match[1])
 
   return Number.isFinite(percent) && percent > 0 ? percent : null
 }
 
 function parseRating(value?: string | null): number | null {
-  if (!value) {
-    return null
-  }
-
+  if (!value) { return null }
   const match = value.replace(",", ".").match(/([0-5](?:\.[0-9])?)/)
-
-  if (!match) {
-    return null
-  }
-
+  if (!match) { return null }
   const rating = Number(match[1])
 
   return Number.isFinite(rating) && rating > 0 && rating <= 5 ? rating : null
@@ -697,10 +618,7 @@ function dedupeProducts(products: ProductInfo[]) {
 }
 
 function isProductType(type: unknown) {
-  if (Array.isArray(type)) {
-    return type.some(isProductType)
-  }
-
+  if (Array.isArray(type)) { return type.some(isProductType) }
   return typeof type === "string" && type.toLowerCase().includes("product")
 }
 
@@ -739,19 +657,13 @@ function normalizeText(value?: string | null) {
 
 function cleanTitle(value?: string | null) {
   const text = normalizeText(value)
-
-  if (!text) {
-    return null
-  }
+  if (!text) { return null }
 
   return text.split(/\s+[|–-]\s+/)[0] || text
 }
 
 function isVisible(element?: HTMLElement | null) {
-  if (!element) {
-    return false
-  }
-
+  if (!element) { return false }
   const rect = element.getBoundingClientRect()
   const style = window.getComputedStyle(element)
 
