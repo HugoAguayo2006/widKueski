@@ -4,7 +4,7 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
-import { useMemo, useState } from "react"
+import { useState } from "react"
 
 type WidgetState = | "collapsed" | "expanded" | "simulator" | "loading"
   | "approved" | "rejected" | "confirmation"
@@ -21,10 +21,9 @@ interface FloatingFinanceWidgetProps {
 
 const availble_amount_of_installments = 12;
 const installmentOptions = Array.from({ length: availble_amount_of_installments + 1 }, (_, i) => i)
-const min_stallments = 3;
+const min_stallments = 4;
 const random_ratio = 0.2;
 const timeout_for_loading = 1200;
-const default_installments_amount = 4;
 
 export function FloatingFinanceWidget({
   productPrice,
@@ -33,7 +32,7 @@ export function FloatingFinanceWidget({
 }: FloatingFinanceWidgetProps) {
 
   const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget <- no shit
-  const [selectedInstallments, setSelectedInstallments] = useState(default_installments_amount) // Cuántas quincenas eligió <- for real?
+  const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Cuántas quincenas eligió <- for real?
   const [userEmail, setUserEmail] = useState("") // Email del usuario <- are you sure?...
 
   const interestRate = selectedInstallments > 6 ? 0.15 : 0 // Interest rate increase after 5 stallments 
@@ -49,8 +48,8 @@ export function FloatingFinanceWidget({
 
   const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
 
-  // Simula verificación
-  const handleCheckEligibility = () => {
+  // Simulate eligibility verification, for debugging
+  const simulate_check_eligibility = () => {
     setState("loading")
     window.setTimeout(() => {
       setState(Math.random() > random_ratio ? "approved" : "rejected")
@@ -241,7 +240,7 @@ export function FloatingFinanceWidget({
                         className="wk-primary"
                         type="button"
                         disabled={!userEmail}
-                        onClick={handleCheckEligibility}
+                        onClick={simulate_check_eligibility}
                       >
                         Verificar elegibilidad
                       </button>
@@ -291,7 +290,6 @@ export function FloatingFinanceWidget({
   )
 }
 
-// Tarjeta beneficio
 function BenefitCard({ icon, text }: { icon: ReactNode; text: string }) {
   return (
     <div className="wk-benefit">
@@ -301,7 +299,6 @@ function BenefitCard({ icon, text }: { icon: ReactNode; text: string }) {
   )
 }
 
-// Beneficio pequeño
 function Perk({ icon, title, text }: {
   icon: ReactNode
   title: string
@@ -317,17 +314,6 @@ function Perk({ icon, title, text }: {
   )
 }
 
-// Fila label/valor
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="wk-row">
-      <span>{label}</span>
-      <b>{value}</b>
-    </div>
-  )
-}
-
-// Resultado (aprobado/rechazado)
 function ResultState({ children, icon, text, title, tone }: {
   children: ReactNode
   icon: ReactNode
