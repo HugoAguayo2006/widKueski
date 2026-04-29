@@ -1,17 +1,15 @@
+import "./styles/index.css"
 import cssText from "data-text:./styles/index.css"
 import type { PlasmoCSConfig, PlasmoGetStyle } from "plasmo"
 import { useEffect, useState } from "react"
 
 import { FloatingFinanceWidget } from "./app/components/FloatingFinanceWidget"
 
-import "./styles/index.css"
 
-// Inyecta el widget en tiendas.
+// Plasmo config
 export const config: PlasmoCSConfig = {
   matches: ["https://*/*"]
 }
-
-// Estilos del shadow root.
 export const getStyle: PlasmoGetStyle = () => {
   const style = document.createElement("style")
   style.textContent = cssText
@@ -28,7 +26,10 @@ type ProductInfo = {
   reviewCount?: number | null
 }
 
-function ContentWidget() {
+const refresh_product_timeout = 250;
+
+// Main implementation
+export default function ContentWidget() {
   const [product, setProduct] = useState<ProductInfo | null>(() =>
     detectSingleProduct()
   )
@@ -59,17 +60,16 @@ function ContentWidget() {
         if (nextProduct) {
           console.info("[Widkueski] Producto detectado", nextProduct)
         }
-      }, 250)
+      }, refresh_product_timeout)
     }
-
     refreshProduct()
 
+    // watch for DOM mutation and refresh the product data <- consider popstate over onpopstate?
     const observer = new MutationObserver(refreshProduct)
     observer.observe(document.documentElement, {
       childList: true,
       subtree: true
     })
-
     window.addEventListener("popstate", refreshProduct)
 
     return () => {
@@ -96,12 +96,10 @@ function ContentWidget() {
   )
 }
 
-export default ContentWidget
-
+/// All the helper methods are based on amazon DOM structure if other website were to
+/// use similar structure it might work but the output is undefined behavior
 function detectSingleProduct(): ProductInfo | null {
-  // Amazon usa selectores propios.
   const amazonProduct = getAmazonProduct()
-
   if (amazonProduct) {
     return amazonProduct
   }
@@ -135,7 +133,6 @@ function getAmazonProduct(): ProductInfo | null {
   if (!location.hostname.includes("amazon.")) {
     return null
   }
-
   const name = normalizeText(
     document.querySelector<HTMLElement>("#productTitle")?.textContent
   )
@@ -148,20 +145,14 @@ function getAmazonProduct(): ProductInfo | null {
   }
 
   return {
-    description: getAmazonDescription(),
-    discountPercent,
-    name,
-    originalPrice,
-    price,
-    rating: getAmazonRating(),
+    description: getAmazonDescription(), discountPercent,
+    name, originalPrice, price, rating: getAmazonRating(),
     reviewCount: getAmazonReviewCount()
   }
 }
 
 function getStructuredProduct(): ProductInfo | null {
   const products: ProductInfo[] = []
-
-  // Datos schema.org/Product.
   document
     .querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]')
     .forEach((script) => {
@@ -169,32 +160,23 @@ function getStructuredProduct(): ProductInfo | null {
         const data = JSON.parse(script.textContent || "")
         collectStructuredProducts(data, products)
       } catch {
-        // Ignora JSON-LD roto.
+        // ignoring no matches and posible uncatched 
+        // error who cares right?, kind of not happing -> guard clauses
       }
     })
 
   const uniqueProducts = dedupeProducts(products)
-
-  if (uniqueProducts.length === 1) {
-    return uniqueProducts[0]
-  }
-
+  if (uniqueProducts.length === 1) { return uniqueProducts[0] }
   return null
 }
 
 function collectStructuredProducts(value: unknown, products: ProductInfo[]) {
-  if (!value) {
-    return
-  }
-
+  if (!value) { return }
   if (Array.isArray(value)) {
     value.forEach((item) => collectStructuredProducts(item, products))
     return
   }
-
-  if (typeof value !== "object") {
-    return
-  }
+  if (typeof value !== "object") { return }
 
   const record = value as Record<string, unknown>
   const graph = record["@graph"]
@@ -203,9 +185,7 @@ function collectStructuredProducts(value: unknown, products: ProductInfo[]) {
     graph.forEach((item) => collectStructuredProducts(item, products))
   }
 
-  if (!isProductType(record["@type"])) {
-    return
-  }
+  if (!isProductType(record["@type"])) { return }
 
   const name = normalizeText(getString(record.name))
   const offerInfo = getOfferInfo(record.offers)
@@ -526,7 +506,6 @@ function getAmazonDescription(): string | undefined {
   if (bullets.length > 0) {
     return bullets.slice(0, 2).join(" · ").slice(0, 180)
   }
-
   return undefined
 }
 
@@ -551,11 +530,11 @@ function looksLikeProductPage() {
 function looksLikeAmazonProductPage() {
   return Boolean(
     document.querySelector("#dp") ||
-      document.querySelector("#ppd") ||
-      document.querySelector("#centerCol") ||
-      document.querySelector("#add-to-cart-button") ||
-      location.pathname.includes("/dp/") ||
-      location.pathname.includes("/gp/product/")
+    document.querySelector("#ppd") ||
+    document.querySelector("#centerCol") ||
+    document.querySelector("#add-to-cart-button") ||
+    location.pathname.includes("/dp/") ||
+    location.pathname.includes("/gp/product/")
   )
 }
 
@@ -589,8 +568,8 @@ function getOfferInfo(offers: unknown): {
   )
   const originalPrice = parsePrice(
     getString(record.highPrice) ||
-      getString(record.priceSpecification) ||
-      getString(record.listPrice)
+    getString(record.priceSpecification) ||
+    getString(record.listPrice)
   )
 
   return {
@@ -622,7 +601,6 @@ function parsePrice(value?: string | null): number | null {
   if (!Number.isFinite(price) || price <= 0) {
     return null
   }
-
   return Math.round(price)
 }
 
