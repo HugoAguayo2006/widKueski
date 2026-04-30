@@ -183,7 +183,7 @@ export function FloatingFinanceWidget({
                       <Perk icon={<Shield size={24} />} title="Garantia extendida" text="2 años" />
                     </div>
                     <div className="wk-benefitGrid">
-                      <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de credito" />
+                      <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de crédito" />
                       <BenefitCard icon={<Zap size={22} />} text="Aprobación instantánea" />
                       <BenefitCard icon={<CheckCircle2 size={22} />} text="100% digital" />
                       <BenefitCard icon={<Gift size={22} />} text="Cashback disponible" />
@@ -291,7 +291,7 @@ export function FloatingFinanceWidget({
                       <Clock size={64} />
                     </motion.div>
                     <h3>Verificando tu elegibilidad...</h3>
-                    <p>Esto solo tomara unos segundos</p>
+                    <p>Esto sólo tomara unos segundos</p>
                   </motion.div>
                 )}
 
@@ -300,7 +300,7 @@ export function FloatingFinanceWidget({
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
                     title="¡Aprobado!"
-                    text="Tu credito ha sido pre-aprobado">
+                    text="Tu crédito ha sido pre-aprobado">
                     <div className="wk-receipt">
                       <p>Resumen de tu compra</p>
                       <Row label="Producto:" value={productName} />
