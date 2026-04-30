@@ -130,7 +130,7 @@ export function FloatingFinanceWidget({
                   </div>
                   <div>
                     <h2>Kueski Pay</h2>
-                    <p>Compra ahora, paga despues</p>
+                    <p>Compra ahora, paga después</p>
                   </div>
                 </div>
 
@@ -179,12 +179,12 @@ export function FloatingFinanceWidget({
                       </div>
                     </div>
                     <div className="wk-perks">
-                      <Perk icon={<Truck size={24} />} title="Envio gratis" text="Llega mañana" />
+                      <Perk icon={<Truck size={24} />} title="Envío gratis" text="Llega mañana" />
                       <Perk icon={<Shield size={24} />} title="Garantia extendida" text="2 años" />
                     </div>
                     <div className="wk-benefitGrid">
                       <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de credito" />
-                      <BenefitCard icon={<Zap size={22} />} text="Aprobacion instantanea" />
+                      <BenefitCard icon={<Zap size={22} />} text="Aprobación instantánea" />
                       <BenefitCard icon={<CheckCircle2 size={22} />} text="100% digital" />
                       <BenefitCard icon={<Gift size={22} />} text="Cashback disponible" />
                     </div>
@@ -217,7 +217,7 @@ export function FloatingFinanceWidget({
                     </div>
 
                      <div className="wk-summary">
-                      <p>Pagaras por quincena</p>
+                      <p>Pagarás por quincena</p>
                       <strong>
                         $
                         {Math.ceil(paymentPerInstallment).toLocaleString(
@@ -226,7 +226,7 @@ export function FloatingFinanceWidget({
                       </strong>
                       <dl>
                         <div>
-                          <dt>Numero de pagos:</dt>
+                          <dt>Número de pagos:</dt>
                           <dd>{selectedInstallments} quincenas</dd>
                         </div>
                         <div>
@@ -250,7 +250,7 @@ export function FloatingFinanceWidget({
                       </dl>
                     </div>
                     <label className="wk-field">
-                      <span>Correo electronico</span>
+                      <span>Correo electrónico</span>
                       <input
                         type="email"
                         placeholder="tu@email.com"
@@ -261,7 +261,7 @@ export function FloatingFinanceWidget({
 
                     <div className="wk-actions">
                       <button className="wk-secondary" type="button" onClick={() => setState("expanded")}>
-                        Atras
+                        Atrás
                       </button>
                       <button
                         className="wk-primary"
@@ -299,7 +299,7 @@ export function FloatingFinanceWidget({
                   <ResultState
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
-                    title="Aprobado!"
+                    title="¡Aprobado!"
                     text="Tu credito ha sido pre-aprobado">
                     <div className="wk-receipt">
                       <p>Resumen de tu compra</p>
@@ -335,7 +335,7 @@ export function FloatingFinanceWidget({
                     tone="danger"
                     icon={<XCircle size={58} />}
                     title="No aprobado"
-                    text="Intenta despues"
+                    text="Intenta después"
                   >
                     <button
                       className="wk-secondary" type="button" 
@@ -347,8 +347,8 @@ export function FloatingFinanceWidget({
                   <ResultState
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
-                    title="Compra confirmada!"
-                    text="Recibiras un correo con los detalles de tu financiamiento">
+                    title="¡Compra confirmada!"
+                    text="Recibirás un correo con los detalles de tu financiamiento">
                     <div className="wk-summary wk-calendar">
                       <p style={{color: "#fff"}}>Tu calendario de pagos</p>
                       {paymentDates.slice(0, 4).map((date, idx) => (
@@ -364,7 +364,7 @@ export function FloatingFinanceWidget({
                         </div>
                       ))}
                       {selectedInstallments > 4 && (
-                        <small>+{selectedInstallments - 4} pagos mas</small>
+                        <small>+{selectedInstallments - 4} pagos más</small>
                       )}
                     </div>
                     <button
