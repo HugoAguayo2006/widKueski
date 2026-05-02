@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { FloatingFinanceWidget } from "./app/components/FloatingFinanceWidget"
 
 
-// Plasmo config
+// Configuración de Plasmo
 export const config: PlasmoCSConfig = {
   matches: ["https://*/*"]
 }
@@ -28,7 +28,7 @@ type ProductInfo = {
 
 const refresh_product_timeout = 250;
 
-// Main implementation
+// Implementación principal
 export default function ContentWidget() {
   const [product, setProduct] = useState<ProductInfo | null>(() =>
     detectSingleProduct()
@@ -64,7 +64,7 @@ export default function ContentWidget() {
     }
     refreshProduct()
 
-    // watch for DOM mutation and refresh the product data <- consider popstate over onpopstate?
+    // Observa cambios en el DOM y actualiza los datos del producto.
     const observer = new MutationObserver(refreshProduct)
     observer.observe(document.documentElement, {
       childList: true,
@@ -96,8 +96,8 @@ export default function ContentWidget() {
   )
 }
 
-/// All the helper methods are based on amazon DOM structure if other website were to
-/// use similar structure it might work but the output is undefined behavior
+/// Los métodos auxiliares se basan en la estructura del DOM de Amazon. Si otro sitio
+/// usa una estructura similar, podría funcionar, pero el resultado no está garantizado.
 
 function detectSingleProduct(): ProductInfo | null {
   const amazonProduct = getAmazonProduct()
@@ -148,8 +148,7 @@ function getStructuredProduct(): ProductInfo | null {
         const data = JSON.parse(script.textContent || "")
         collectStructuredProducts(data, products)
       } catch {
-        // ignoring no matches and posible uncatched 
-        // error who cares right?, kind of not happing -> guard clauses
+        // Ignora datos sin coincidencias o JSON inválido.
       }
     })
 

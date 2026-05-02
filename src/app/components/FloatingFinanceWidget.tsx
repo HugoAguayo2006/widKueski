@@ -31,11 +31,11 @@ export function FloatingFinanceWidget({
   productDescription, originalPrice, discountPercent, rating, reviewCount
 }: FloatingFinanceWidgetProps) {
 
-  const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget <- no shit
-  const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Cuántas quincenas eligió <- for real?
-  const [userEmail, setUserEmail] = useState("") // Email del usuario <- are you sure?...
+  const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
+  const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Quincenas seleccionadas
+  const [userEmail, setUserEmail] = useState("") // Correo del usuario
 
-  const interest= 0.025; //Interest per fortnite
+  const interest= 0.025; // Interés por quincena
 
   const hasInterest = selectedInstallments > 6; 
   const totalWithInterest = hasInterest ? Math.ceil(productPrice * Math.pow(1 + interest, selectedInstallments)) : productPrice;
@@ -51,7 +51,7 @@ export function FloatingFinanceWidget({
 
   const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
 
-  // Simulate eligibility verification, for debugging
+  // Simula la verificación de elegibilidad.
   const simulate_check_eligibility = () => {
     setState("loading")
     window.setTimeout(() => {
@@ -70,7 +70,7 @@ export function FloatingFinanceWidget({
     }),
     [selectedInstallments])
 
-  // Returns the widget to the inital state
+  // Regresa el widget al estado inicial.
   const handleStartOver = () => {
     setState("collapsed")
     setUserEmail("")
@@ -180,13 +180,13 @@ export function FloatingFinanceWidget({
                     </div>
                     <div className="wk-perks">
                       <Perk icon={<Truck size={24} />} title="Envío gratis" text="Llega mañana" />
-                      <Perk icon={<Shield size={24} />} title="Garantia extendida" text="2 años" />
+                      <Perk icon={<Shield size={24} />} title="Garantía extendida" text="2 años" />
                     </div>
                     <div className="wk-benefitGrid">
                       <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de crédito" />
                       <BenefitCard icon={<Zap size={22} />} text="Aprobación instantánea" />
                       <BenefitCard icon={<CheckCircle2 size={22} />} text="100% digital" />
-                      <BenefitCard icon={<Gift size={22} />} text="Cashback disponible" />
+                      <BenefitCard icon={<Gift size={22} />} text="Reembolso disponible" />
                     </div>
                     <button className="wk-primary" type="button" onClick={() => setState("simulator")}>
                       <ShoppingCart size={24} />
@@ -201,7 +201,7 @@ export function FloatingFinanceWidget({
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
 
                     <h3 className="wk-sectionTitle">
-                      Selecciona la cantidad de quincenas de tu preferencia a pagar:
+                      Selecciona en cuántas quincenas quieres pagar:
                     </h3>
                     <div className="wk-installments">
                       {installmentOptions.map((num) => (
@@ -234,7 +234,7 @@ export function FloatingFinanceWidget({
 
               <dd>
   {!hasInterest
-    ? "0% (Sin intereses)"
+    ? "0% (sin intereses)"
     : `${interestPercent.toFixed(0)}%`}
 </dd>
                         </div>
@@ -291,7 +291,7 @@ export function FloatingFinanceWidget({
                       <Clock size={64} />
                     </motion.div>
                     <h3>Verificando tu elegibilidad...</h3>
-                    <p>Esto sólo tomara unos segundos</p>
+                    <p>Esto solo tomará unos segundos</p>
                   </motion.div>
                 )}
 
@@ -300,7 +300,7 @@ export function FloatingFinanceWidget({
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
                     title="¡Aprobado!"
-                    text="Tu crédito ha sido pre-aprobado">
+                    text="Tu crédito fue preaprobado">
                     <div className="wk-receipt">
                       <p>Resumen de tu compra</p>
                       <Row label="Producto:" value={productName} />
@@ -335,7 +335,7 @@ export function FloatingFinanceWidget({
                     tone="danger"
                     icon={<XCircle size={58} />}
                     title="No aprobado"
-                    text="Intenta después"
+                    text="Inténtalo de nuevo más tarde"
                   >
                     <button
                       className="wk-secondary" type="button" 

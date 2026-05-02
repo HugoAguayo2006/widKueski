@@ -1,8 +1,8 @@
 {
   "name": "widkueski",
-  "displayName": "NUEVO | Widkueski",
+  "displayName": "Nuevo | Widkueski",
   "version": "0.0.2",
-  "description": "widKueski es un widget inteligente que integra opciones de financiamiento de Kueski directamente en páginas de e-commerce, permitiendo a los usuarios visualizar y simular pagos a plazos sin salir del sitio.",
+  "description": "Widkueski es un widget inteligente que integra opciones de financiamiento de Kueski directamente en páginas de comercio electrónico, permitiendo a los usuarios visualizar y simular pagos a plazos sin salir del sitio.",
   "author": "Peñafiel",
   "scripts": {
     "dev": "plasmo dev",
