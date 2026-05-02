@@ -62,24 +62,6 @@
   white-space: nowrap;
 }
 
-.wk-scrim {
-  background: rgba(15, 23, 42, 0.48);
-  border: 0;
-  bottom: 0;
-  cursor: default;
-  left: 0;
-  position: fixed;
-  right: 0;
-  top: 0;
-  z-index: 2147483644;
-}
-
-@supports (backdrop-filter: blur(10px)) {
-  .wk-scrim {
-    backdrop-filter: blur(8px);
-  }
-}
-
 .wk-panel {
   background: #fff;
   border-radius: 22px;

@@ -103,16 +103,6 @@ export function FloatingFinanceWidget({
       <AnimatePresence>
         {state !== "collapsed" && (
           <>
-            <motion.button
-              className="wk-scrim"
-              type="button"
-              aria-label="Cerrar Kueski Pay"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setState("collapsed")}
-            />
-
             <motion.section
               className="wk-panel"
               role="dialog"
