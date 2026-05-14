@@ -6,8 +6,8 @@ import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
 import { useMemo, useState } from "react"
 
-type WidgetState = | "collapsed" | "expanded" | "simulator" | "loading"
-  | "approved" | "rejected" | "confirmation"
+type WidgetState = | "collapsed" | "expanded" | "verification" | "loading"
+  | "approved" | "rejected"  | "simulator" | "confirmation" | "resume"
 
 interface FloatingFinanceWidgetProps {
   productPrice: number
@@ -178,12 +178,45 @@ export function FloatingFinanceWidget({
                       <BenefitCard icon={<CheckCircle2 size={22} />} text="100% digital" />
                       <BenefitCard icon={<Gift size={22} />} text="Reembolso disponible" />
                     </div>
-                    <button className="wk-primary" type="button" onClick={() => setState("simulator")}>
+                    <button className="wk-primary" type="button" onClick={() => setState("verification")}>
                       <ShoppingCart size={24} />
                       Ver opciones de pago
                     </button>
 
                     <p className="wk-note">Sin pago inicial · Intereses desde 0%</p>
+                  </motion.div>
+                )}
+
+                {state === "verification" && (
+                  <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
+                    <h3 className="wk-sectionTitle">
+                      Inicia Sesión
+                    </h3>
+
+                    <label className="wk-field">
+                      <span>Correo electrónico</span>
+                      <input
+                        type="email"
+                        placeholder="tu@email.com"
+                        value={userEmail}
+                        onChange={(event) => setUserEmail(event.target.value)}
+                      />
+                    </label>
+
+                    <div className="wk-actions">
+                      <button className="wk-secondary" type="button" onClick={() => setState("expanded")}>
+                        Regresar
+                      </button>
+                      <button
+                        className="wk-primary"
+                        type="button"
+                        disabled={!userEmail}
+                        onClick={simulate_check_eligibility}
+                      >
+                        Iniciar Sesión
+                      </button>
+                    </div> 
+
                   </motion.div>
                 )}
 
@@ -239,15 +272,6 @@ export function FloatingFinanceWidget({
                         </div>
                       </dl>
                     </div>
-                    <label className="wk-field">
-                      <span>Correo electrónico</span>
-                      <input
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={userEmail}
-                        onChange={(event) => setUserEmail(event.target.value)}
-                      />
-                    </label>
 
                     <div className="wk-actions">
                       <button className="wk-secondary" type="button" onClick={() => setState("expanded")}>
@@ -256,10 +280,9 @@ export function FloatingFinanceWidget({
                       <button
                         className="wk-primary"
                         type="button"
-                        disabled={!userEmail}
-                        onClick={simulate_check_eligibility}
+                        onClick={() => setState("confirmation")}
                       >
-                        Verificar elegibilidad
+                        Seleccionar plan de pago
                       </button>
                     </div>
                   </motion.div>
@@ -280,8 +303,8 @@ export function FloatingFinanceWidget({
                       }}>
                       <Clock size={64} />
                     </motion.div>
-                    <h3>Verificando tu elegibilidad...</h3>
-                    <p>Esto solo tomará unos segundos</p>
+                    <h3>Iniciando Sesión...</h3>
+                    <p>Esto solo tomara unos segundos</p>
                   </motion.div>
                 )}
 
@@ -289,10 +312,41 @@ export function FloatingFinanceWidget({
                   <ResultState
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
-                    title="¡Aprobado!"
-                    text="Tu crédito fue preaprobado">
+                    title="¡Bienvenido!"
+                    text="Haz iniciado sesión correctamente">
+                    <button
+                      className="wk-primary"
+                      type="button"
+                      onClick={() => setState("simulator")}>
+                      Visualizar planes de pago 
+                    </button>
+                    <button
+                      className="wk-linkButton"
+                      type="button"
+                      onClick={() => setState("verification")}>
+                      Regresar
+                    </button>
+                  </ResultState>
+                )}
+
+                {state === "rejected" && (
+                  <ResultState
+                    tone="danger"
+                    icon={<XCircle size={58} />}
+                    title="No se encontró ningún usuario"
+                    text="Intenta con otro correo o nuevamente más tarde"
+                  >
+                    <button
+                      className="wk-secondary" type="button" 
+                      onClick={() => setState("verification")}>Regresar</button>
+                  </ResultState>
+                )}
+
+                {state === "confirmation" && ( 
+                  <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
+                    <h3>Previo a continuar, revisa toda la información: </h3>
                     <div className="wk-receipt">
-                      <p>Resumen de tu compra</p>
+                      <p>Confirmación de plan de pagos</p>
                       <Row label="Producto:" value={productName} />
                       <Row
                         label="Plan de pago:"
@@ -308,32 +362,19 @@ export function FloatingFinanceWidget({
                     <button
                       className="wk-primary"
                       type="button"
-                      onClick={() => setState("confirmation")}>
-                      Confirmar compra con Kueski
+                      onClick={() => setState("resume")}>
+                      Confirmar plan 
                     </button>
                     <button
                       className="wk-linkButton"
                       type="button"
                       onClick={() => setState("simulator")}>
-                      Modificar plan
+                      Regresar
                     </button>
-                  </ResultState>
+                  </motion.div>
                 )}
 
-                {state === "rejected" && (
-                  <ResultState
-                    tone="danger"
-                    icon={<XCircle size={58} />}
-                    title="No aprobado"
-                    text="Inténtalo de nuevo más tarde"
-                  >
-                    <button
-                      className="wk-secondary" type="button" 
-                      onClick={handleStartOver}>Cerrar</button>
-                  </ResultState>
-                )}
-
-                {state === "confirmation" && (
+                {state === "resume" && (
                   <ResultState
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
