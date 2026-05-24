@@ -4,10 +4,10 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 
 type WidgetState = | "collapsed" | "expanded" | "verification" | "loading"
-  | "approved" | "rejected"  | "simulator" | "confirmation" | "resume"
+  | "approved" | "rejected"  | "simulator" | "confirmation" | "card" | "resume"
 
 interface FloatingFinanceWidgetProps {
   productPrice: number
@@ -24,6 +24,7 @@ const installmentOptions = Array.from({ length: availble_amount_of_installments 
 const min_stallments = 12;
 const random_ratio = 0.2;
 const timeout_for_loading = 1200;
+const card_timer_seconds = 60;
 
 export function FloatingFinanceWidget({
   productPrice,
@@ -34,6 +35,7 @@ export function FloatingFinanceWidget({
   const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
   const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Quincenas seleccionadas
   const [userEmail, setUserEmail] = useState("") // Correo del usuario
+  const [cardTimerSeconds, setCardTimerSeconds] = useState(card_timer_seconds)
 
   const interest= 0.025; // Interés por quincena
 
@@ -69,6 +71,32 @@ export function FloatingFinanceWidget({
       })
     }),
     [selectedInstallments])
+
+  useEffect(() => {
+    if (state !== "card") {
+      setCardTimerSeconds(card_timer_seconds)
+      return
+    }
+
+    setCardTimerSeconds(card_timer_seconds)
+
+    const intervalId = window.setInterval(() => {
+      setCardTimerSeconds((currentSeconds) => Math.max(currentSeconds - 1, 0))
+    }, 1000)
+
+    const timeoutId = window.setTimeout(() => {
+      setState("simulator")
+    }, card_timer_seconds * 1000)
+
+    return () => {
+      window.clearInterval(intervalId)
+      window.clearTimeout(timeoutId)
+    }
+  }, [state])
+
+  const cardTimerLabel = `${Math.floor(cardTimerSeconds / 60)}:${String(
+    cardTimerSeconds % 60
+  ).padStart(2, "0")}`
 
   // Regresa el widget al estado inicial.
   const handleStartOver = () => {
@@ -168,10 +196,6 @@ export function FloatingFinanceWidget({
                         O desde ${minimumPayment.toLocaleString("es-MX")} quincenales con Kueski
                       </div>
                     </div>
-                    <div className="wk-perks">
-                      <Perk icon={<Truck size={24} />} title="Envío gratis" text="Llega mañana" />
-                      <Perk icon={<Shield size={24} />} title="Garantía extendida" text="2 años" />
-                    </div>
                     <div className="wk-benefitGrid">
                       <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de crédito" />
                       <BenefitCard icon={<Zap size={22} />} text="Aprobación instantánea" />
@@ -255,11 +279,11 @@ export function FloatingFinanceWidget({
                         <div>
                           <dt>Interés:</dt>
 
-              <dd>
-  {!hasInterest
-    ? "0% (sin intereses)"
-    : `${interestPercent.toFixed(0)}%`}
-</dd>
+                        <dd>
+                            {!hasInterest
+                              ? "0% (sin intereses)"
+                              : `${interestPercent.toFixed(0)}%`}
+                        </dd>
                         </div>
                         <div>
                           <dt>Total a pagar:</dt>
@@ -321,7 +345,7 @@ export function FloatingFinanceWidget({
                       Visualizar planes de pago 
                     </button>
                     <button
-                      className="wk-linkButton"
+                      className="wk-secondary wk-returnButton"
                       type="button"
                       onClick={() => setState("verification")}>
                       Regresar
@@ -363,10 +387,59 @@ export function FloatingFinanceWidget({
                       className="wk-primary"
                       type="button"
                       onClick={() => setState("resume")}>
-                      Confirmar plan 
+                      Pagar con WidKueski 
                     </button>
                     <button
-                      className="wk-linkButton"
+                      className="wk-primary"
+                      type="button"
+                      onClick={() => setState("card")}>
+                      Utilizar tarjeta digital
+                    </button>
+                    <button
+                      className="wk-secondary wk-returnButton"
+                      type="button"
+                      onClick={() => setState("simulator")}>
+                      Regresar
+                    </button>
+                  </motion.div>
+                )}
+
+                {state === "card" && ( 
+                  <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
+                    <h3>Copie y pegue los datos de la tarjeta digital para pagar</h3>
+                    <div className="wk-card" aria-label="Tarjeta digital Kueski">
+                      <div className="wk-cardHeader">
+                        <span>Tarjeta Digital</span>
+                        <strong>kueski</strong>
+                      </div>
+                      <div className="wk-cardNumber">
+                        <span>1234</span>
+                        <span>4568</span>
+                        <span>1234</span>
+                        <span>4568</span>
+                      </div>
+                      <div className="wk-cardDetails">
+                        <span>CVV 1234</span>
+                      </div>
+                      <p>NOMBRE USUARIO</p>
+                    </div>
+
+                    <div className="wk-cardTimer" aria-live="polite">
+                      <motion.span
+                        className="wk-cardTimerIcon"
+                        animate={{ rotate: 360 }}
+                        transition={{
+                          duration: 1,
+                          repeat: Infinity,
+                          ease: "linear"
+                        }}>
+                        <Clock size={24} />
+                      </motion.span>
+                      <span>{cardTimerLabel}</span>
+                    </div>
+  
+                    <button
+                      className="wk-secondary wk-returnButton"
                       type="button"
                       onClick={() => setState("simulator")}>
                       Regresar

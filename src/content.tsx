@@ -105,6 +105,11 @@ function detectSingleProduct(): ProductInfo | null {
     return amazonProduct
   }
 
+  const zaraProduct = getZaraProduct()
+  if (zaraProduct) {
+    return zaraProduct
+  }
+
   const structuredProduct = getStructuredProduct()
   if (structuredProduct) { return structuredProduct }
 
@@ -136,6 +141,23 @@ function getAmazonProduct(): ProductInfo | null {
     description: getAmazonDescription(), discountPercent,
     name, originalPrice, price, rating: getAmazonRating(),
     reviewCount: getAmazonReviewCount()
+  }
+}
+
+function getZaraProduct(): ProductInfo | null {
+  if (!location.hostname.includes("zara.")) { return null }
+
+  const name = getZaraProductName()
+  const price = getZaraPrice()
+  const originalPrice = getZaraOriginalPrice(price)
+
+  if (!name || !price || !looksLikeZaraProductPage()) { return null }
+
+  return {
+    description: getZaraDescription(),
+    discountPercent: getDiscountPercent(price, originalPrice),
+    name, originalPrice, price, rating: null,
+    reviewCount: null
   }
 }
 
@@ -316,7 +338,8 @@ function getProductPrice(): number | null {
     "[data-price]",
     ".price",
     ".product-price",
-    ".sale-price"
+    ".sale-price",
+    "._mainPrice_1dnvn_52"
   ]
 
   for (const selector of selectors) {
@@ -471,6 +494,98 @@ function getAmazonDescription(): string | undefined {
   return undefined
 }
 
+function getZaraProductName(): string | null {
+  const selectors = [
+    ".product-detail-info__header-name",
+    ".product-detail-info__name",
+    '[data-qa-id="product-detail-info-name"]',
+    '[data-testid="product-name"]',
+    "main h1",
+    "h1"
+  ]
+
+  for (const selector of selectors) {
+    const element = document.querySelector<HTMLElement>(selector)
+    const text = normalizeText(element?.textContent)
+
+    if (text && isVisible(element) && text.length >= 4) {
+      return text
+    }
+  }
+
+  const metaTitle =
+    getMetaContent('meta[property="og:title"]') ||
+    getMetaContent('meta[name="twitter:title"]')
+
+  return cleanTitle(metaTitle)
+}
+
+function getZaraPrice(): number | null {
+  const selectors = [
+    ".product-detail-info__price-amount .money-amount__main",
+    ".product-detail-info__price .money-amount__main",
+    ".product-detail-info__price",
+    '[data-qa-id="product-detail-info-price"]',
+    '[data-testid="product-price"]',
+    ".money-amount__main",
+    ".price"
+  ]
+
+  for (const selector of selectors) {
+    const element = document.querySelector<HTMLElement>(selector)
+    const price = parsePrice(element?.textContent)
+
+    if (price && isVisible(element)) {
+      return price
+    }
+  }
+
+  return null
+}
+
+function getZaraOriginalPrice(currentPrice?: number | null): number | null {
+  const selectors = [
+    ".product-detail-info__price .money-amount--old .money-amount__main",
+    ".product-detail-info__price del .money-amount__main",
+    ".product-detail-info__price s .money-amount__main",
+    ".money-amount--old .money-amount__main",
+    "del",
+    "s"
+  ]
+
+  for (const selector of selectors) {
+    const element = document.querySelector<HTMLElement>(selector)
+    const price = parsePrice(element?.textContent)
+
+    if (price && isVisible(element) && (!currentPrice || price > currentPrice)) {
+      return price
+    }
+  }
+
+  return null
+}
+
+function getZaraDescription(): string | undefined {
+  const selectors = [
+    ".product-detail-description",
+    ".product-detail-info__description",
+    '[data-qa-id="product-detail-info-description"]',
+    '[data-testid="product-description"]'
+  ]
+
+  for (const selector of selectors) {
+    const text = normalizeText(
+      document.querySelector<HTMLElement>(selector)?.textContent
+    )
+
+    if (text && text.length >= 12 && text.length <= 180) {
+      return text
+    }
+  }
+
+  return undefined
+}
+
 function looksLikeProductPage() {
   const productSignals = [
     '[itemtype*="schema.org/Product"]',
@@ -486,6 +601,15 @@ function looksLikeProductPage() {
     '[data-testid*="add-to-cart" i]'
   ]
   return productSignals.some((selector) => document.querySelector(selector))
+}
+
+function looksLikeZaraProductPage() {
+  return Boolean(
+    document.querySelector(".product-detail-info") ||
+    document.querySelector('[data-qa-id*="product-detail" i]') ||
+    document.querySelector(".product-detail-info__price") ||
+    location.pathname.includes("-p")
+  )
 }
 
 function looksLikeAmazonProductPage() {
