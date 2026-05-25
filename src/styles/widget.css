@@ -340,6 +340,12 @@
   line-height: 1.35;
 }
 
+.wk-underlinedTitle {
+  border-bottom: 1px solid #cbd5e1;
+  margin: 0;
+  padding-bottom: 14px;
+}
+
 .wk-installments {
   display: grid;
   gap: 10px;
@@ -465,6 +471,21 @@
 .wk-field input:focus {
   border-color: var(--wk-blue);
   box-shadow: 0 0 0 4px rgba(6, 66, 224, 0.12);
+}
+
+.wk-accountLink,
+.wk-accountLink:visited {
+  color: #374151;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 4px;
+}
+
+.wk-accountLink:hover,
+.wk-accountLink:focus-visible {
+  color: var(--wk-blue);
 }
 
 .wk-actions {
