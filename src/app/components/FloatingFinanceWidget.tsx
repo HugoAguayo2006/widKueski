@@ -35,6 +35,7 @@ export function FloatingFinanceWidget({
   const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
   const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Quincenas seleccionadas
   const [userEmail, setUserEmail] = useState("") // Correo del usuario
+  const [userPassword, setUserPassword] = useState("") //Contraseña
   const [cardTimerSeconds, setCardTimerSeconds] = useState(card_timer_seconds)
 
   const interest= 0.025; // Interés por quincena
@@ -207,7 +208,7 @@ export function FloatingFinanceWidget({
                       Ver opciones de pago
                     </button>
 
-                    <p className="wk-note">Sin pago inicial · Intereses desde 0%</p>
+                    <p className="wk-note">Sin pago inicial · 0% de interés si liquidas antes de la 7.ª quincena</p>
                   </motion.div>
                 )}
 
@@ -217,15 +218,37 @@ export function FloatingFinanceWidget({
                       Inicia Sesión
                     </h3>
 
-                    <label className="wk-field">
-                      <span>Correo electrónico</span>
-                      <input
-                        type="email"
-                        placeholder="tu@email.com"
-                        value={userEmail}
-                        onChange={(event) => setUserEmail(event.target.value)}
-                      />
-                    </label>
+                    <div className="wk-receipt">
+                        <label className="wk-field">
+                        <span>Correo electrónico:</span>
+                        <input
+                          type="email"
+                          placeholder="tu@email.com"
+                          value={userEmail}
+                          onChange={(event) => setUserEmail(event.target.value)}
+                        />
+                        </label>
+                        <label className="wk-field">
+                          <span>Contraseña:</span>
+                          <input
+                            type="contraseña"
+                            placeholder="Ingrese su contraseña"
+                            value={userPassword}
+                            onChange={(event) => setUserPassword(event.target.value)}
+                          />
+                        </label>
+                        <a
+                          className="wk-accountLink"
+                          href="https://accounts.kueski.com/u/login?state=hKFo2SBYRjFMZXJjZEFQNDkySWJtLTAzbTRmbWljN2ZDOWZIMqFur3VuaXZlcnNhbC1sb2dpbqN0aWTZIDhYUy1EcUFabnB2MXQ0eF9xcEp4YnFBcWRiNEgtWDMyo2NpZNkgbkpiYnpvSmtqRDBsSThRRFhyMzZtYUJUT0lpNmVRek0"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          Crear cuenta de Kueski
+                        </a>
+                    </div>
+
+                    
+                    
 
                     <div className="wk-actions">
                       <button className="wk-secondary" type="button" onClick={() => setState("expanded")}>
@@ -234,7 +257,7 @@ export function FloatingFinanceWidget({
                       <button
                         className="wk-primary"
                         type="button"
-                        disabled={!userEmail}
+                        disabled={!userEmail && !userPassword}
                         onClick={simulate_check_eligibility}
                       >
                         Iniciar Sesión
@@ -368,7 +391,8 @@ export function FloatingFinanceWidget({
 
                 {state === "confirmation" && ( 
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
-                    <h3>Previo a continuar, revisa toda la información: </h3>
+                    <h3 className="wk-sectionTitle wk-underlinedTitle">Previo a continuar, revisa toda la información:</h3>
+
                     <div className="wk-receipt">
                       <p>Confirmación de plan de pagos</p>
                       <Row label="Producto:" value={productName} />
@@ -406,7 +430,9 @@ export function FloatingFinanceWidget({
 
                 {state === "card" && ( 
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
-                    <h3>Copie y pegue los datos de la tarjeta digital para pagar</h3>
+
+                    <h3 className="wk-sectionTitle wk-underlinedTitle">Copie y pegue los datos de la tarjeta digital para pagar</h3>
+
                     <div className="wk-card" aria-label="Tarjeta digital Kueski">
                       <div className="wk-cardHeader">
                         <span>Tarjeta Digital</span>
