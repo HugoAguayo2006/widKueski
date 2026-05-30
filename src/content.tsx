@@ -110,6 +110,11 @@ function detectSingleProduct(): ProductInfo | null {
     return zaraProduct
   }
 
+  const liverpoolProduct = getLiverpoolProduct()
+  if (liverpoolProduct) {
+    return liverpoolProduct
+  }
+
   const structuredProduct = getStructuredProduct()
   if (structuredProduct) { return structuredProduct }
 
@@ -158,6 +163,26 @@ function getZaraProduct(): ProductInfo | null {
     discountPercent: getDiscountPercent(price, originalPrice),
     name, originalPrice, price, rating: null,
     reviewCount: null
+  }
+}
+
+function getLiverpoolProduct(): ProductInfo | null {
+  if (!location.hostname.includes("liverpool.com.mx")) { return null }
+
+  const name = getLiverpoolProductName()
+  const price = getLiverpoolPrice()
+  const originalPrice = getLiverpoolOriginalPrice(price)
+
+  if (!name || !price || !looksLikeLiverpoolProductPage()) { return null }
+
+  return {
+    description: getLiverpoolDescription(),
+    discountPercent: getDiscountPercent(price, originalPrice),
+    name,
+    originalPrice,
+    price,
+    rating: getProductRating(),
+    reviewCount: getProductReviewCount()
   }
 }
 
@@ -586,6 +611,116 @@ function getZaraDescription(): string | undefined {
   return undefined
 }
 
+function getLiverpoolProductName(): string | null {
+  const selectors = [
+    ".a-product__information--title",
+    ".m-product__information--title",
+    '[data-testid="product-title"]',
+    '[data-test="product-title"]',
+    '[class*="product"][class*="title" i]',
+    "main h1",
+    "h1"
+  ]
+
+  for (const selector of selectors) {
+    const element = document.querySelector<HTMLElement>(selector)
+    const text = normalizeText(element?.textContent)
+
+    if (text && isVisible(element) && text.length >= 4) {
+      return text
+    }
+  }
+
+  const metaTitle =
+    getMetaContent('meta[property="og:title"]') ||
+    getMetaContent('meta[name="twitter:title"]')
+
+  return cleanTitle(metaTitle)
+}
+
+function getLiverpoolPrice(): number | null {
+  const metaPrice =
+    getMetaContent('meta[property="product:price:amount"]') ||
+    getMetaContent('meta[property="og:price:amount"]') ||
+    getMetaContent('meta[itemprop="price"]')
+
+  const parsedMetaPrice = parsePrice(metaPrice)
+  if (parsedMetaPrice) { return parsedMetaPrice }
+
+  const selectors = [
+    ".a-product__paragraphDiscountPrice",
+    ".a-product__paragraphPrice",
+    ".m-product__price-dw-promotion",
+    ".m-product__price",
+    '[data-testid="product-price"]',
+    '[data-test="product-price"]',
+    '[class*="product"][class*="price" i]',
+    '[class*="price" i]'
+  ]
+
+  for (const selector of selectors) {
+    const price = parseVisiblePrice(selector)
+    if (price) { return price }
+  }
+
+  return null
+}
+
+function getLiverpoolOriginalPrice(currentPrice?: number | null): number | null {
+  const metaPrice =
+    getMetaContent('meta[property="product:original_price:amount"]') ||
+    getMetaContent('meta[property="og:price:standard_amount"]')
+
+  const parsedMetaPrice = parsePrice(metaPrice)
+  if (parsedMetaPrice && (!currentPrice || parsedMetaPrice > currentPrice)) {
+    return parsedMetaPrice
+  }
+
+  const selectors = [
+    ".a-product__paragraphRegularPrice",
+    ".a-product__paragraphListPrice",
+    ".a-product__previousPrice",
+    ".m-product__previousPrice",
+    '[data-testid="product-original-price"]',
+    '[data-test="product-original-price"]',
+    "del",
+    "s"
+  ]
+
+  for (const selector of selectors) {
+    const price = parseVisiblePrice(selector)
+
+    if (price && (!currentPrice || price > currentPrice)) {
+      return price
+    }
+  }
+
+  return null
+}
+
+function getLiverpoolDescription(): string | undefined {
+  const selectors = [
+    ".m-product__description",
+    ".o-product__description",
+    ".a-product__description",
+    '[data-testid="product-description"]',
+    '[data-test="product-description"]',
+    '[class*="description" i]'
+  ]
+
+  for (const selector of selectors) {
+    const text = normalizeText(
+      document.querySelector<HTMLElement>(selector)?.textContent
+    )
+
+    if (text && text.length >= 12 && text.length <= 220) {
+      return text
+    }
+  }
+
+  return undefined
+}
+
 function looksLikeProductPage() {
   const productSignals = [
     '[itemtype*="schema.org/Product"]',
@@ -601,6 +736,19 @@ function looksLikeProductPage() {
     '[data-testid*="add-to-cart" i]'
   ]
   return productSignals.some((selector) => document.querySelector(selector))
+}
+
+function looksLikeLiverpoolProductPage() {
+  return Boolean(
+    location.pathname.includes("/tienda/pdp/") ||
+    location.pathname.includes("/pdp/") ||
+    document.querySelector(".a-product__information--title") ||
+    document.querySelector(".m-product__information--title") ||
+    document.querySelector(".a-product__paragraphPrice") ||
+    document.querySelector(".a-product__paragraphDiscountPrice") ||
+    document.querySelector('button[aria-label*="bolsa" i]') ||
+    document.querySelector('button[aria-label*="comprar" i]')
+  )
 }
 
 function looksLikeZaraProductPage() {
@@ -772,6 +920,27 @@ function getElementTextWithAttributes(selector: string) {
       .filter(Boolean)
       .join(" ")
   )
+}
+
+function parseVisiblePrice(selector: string): number | null {
+  const elements = Array.from(document.querySelectorAll<HTMLElement>(selector))
+
+  for (const element of elements) {
+    const explicitPrice =
+      element.getAttribute("content") ||
+      element.getAttribute("data-price") ||
+      element.getAttribute("data-testid")
+    const text = normalizeText(explicitPrice || element.textContent)
+
+    if (!text || text.length > 120 || !isVisible(element)) {
+      continue
+    }
+
+    const price = parsePrice(text)
+    if (price) { return price }
+  }
+
+  return null
 }
 
 function normalizeText(value?: string | null) {
