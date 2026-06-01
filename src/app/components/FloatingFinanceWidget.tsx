@@ -73,8 +73,7 @@ interface FloatingFinanceWidgetProps {
   reviewCount?: number | null
 }
 
-const API_BASE_URL =
-  process.env.PLASMO_PUBLIC_API_URL ?? "http://127.0.0.1:8000/api/v1"
+const API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
 const availble_amount_of_installments = 12;
 const fallbackInstallmentOptions = Array.from({ length: availble_amount_of_installments }, (_, i) => i + 1)
