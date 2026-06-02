@@ -95,12 +95,20 @@
 
 .wk-brandIcon {
   align-items: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: #ffffff;
   border-radius: 14px;
   display: flex;
   height: 46px;
   justify-content: center;
+  overflow: hidden;
   width: 46px;
+}
+
+.wk-brandIcon img {
+  display: block;
+  height: 34px;
+  object-fit: contain;
+  width: 34px;
 }
 
 .wk-brand h2,

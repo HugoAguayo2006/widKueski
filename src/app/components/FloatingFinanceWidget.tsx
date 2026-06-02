@@ -6,6 +6,8 @@ import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
 import { useEffect, useMemo, useState } from "react"
 
+import kueskiPayLogo from "../../Kueski-Pay.webp"
+
 type WidgetState = | "collapsed" | "expanded" | "verification" | "loading"
   | "approved" | "rejected"  | "simulator" | "confirmation" | "card" | "resume"
 type LoadingIntent = "login" | "payment" | "card"
@@ -75,9 +77,9 @@ interface FloatingFinanceWidgetProps {
 
 const API_BASE_URL = "http://127.0.0.1:8000/api/v1"
 
-const availble_amount_of_installments = 12;
-const fallbackInstallmentOptions = Array.from({ length: availble_amount_of_installments }, (_, i) => i + 1)
-const min_stallments = 12;
+const available_amount_of_installments = 12;
+const fallbackInstallmentOptions = Array.from({ length: available_amount_of_installments }, (_, i) => i + 1)
+const min_installments = 12;
 const card_timer_seconds = 60;
 const loading_timeout = 1200;
 
@@ -88,7 +90,7 @@ export function FloatingFinanceWidget({
 }: FloatingFinanceWidgetProps) {
 
   const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
-  const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Quincenas seleccionadas
+  const [selectedInstallments, setSelectedInstallments] = useState(min_installments) // Quincenas seleccionadas
   const [userEmail, setUserEmail] = useState("") // Correo del usuario
   const [userPassword, setUserPassword] = useState("") //Contraseña
   const [cardTimerSeconds, setCardTimerSeconds] = useState(card_timer_seconds)
@@ -110,7 +112,7 @@ export function FloatingFinanceWidget({
   const hasInterest = interest > 0; 
   const totalWithInterest = hasInterest ? Math.ceil(productPrice * (1 + interest)) : productPrice;
   const paymentPerInstallment = Math.ceil(totalWithInterest / selectedInstallments);
-  const minimumInstallments = availableInstallments.at(-1) ?? availble_amount_of_installments
+  const minimumInstallments = availableInstallments.at(-1) ?? available_amount_of_installments
   const minimumPayment = Math.ceil(totalWithInterest / minimumInstallments);
 
   const interestPercent = hasInterest ? interest * 100 : 0;
@@ -140,6 +142,7 @@ export function FloatingFinanceWidget({
         },
         body: JSON.stringify({
           email: userEmail.trim(),
+          password: userPassword,
           monto_compra: productPrice
         })
       })
@@ -236,7 +239,7 @@ export function FloatingFinanceWidget({
             status: payment.estado
           }
         })
-      : Array.from({ length: Math.min(selectedInstallments, min_stallments) }).map((_, idx) => {
+      : Array.from({ length: Math.min(selectedInstallments, min_installments) }).map((_, idx) => {
       const date = new Date()
       date.setDate(date.getDate() + (idx + 1) * 15)
       return {
@@ -286,7 +289,7 @@ export function FloatingFinanceWidget({
     setLoginData(null)
     setCheckoutData(null)
     setCheckoutError("")
-    setSelectedInstallments(min_stallments)
+    setSelectedInstallments(min_installments)
     setLoginError("No se encontró ningún usuario")
   }
 
@@ -330,7 +333,7 @@ export function FloatingFinanceWidget({
               <header className="wk-header">
                 <div className="wk-brand">
                   <div className="wk-brandIcon">
-                    <CreditCard size={30} strokeWidth={2.2} />
+                    <img src={kueskiPayLogo} alt="" aria-hidden="true" />
                   </div>
                   <div>
                     <h2>Kueski Pay</h2>
@@ -400,7 +403,7 @@ export function FloatingFinanceWidget({
                 {state === "verification" && (
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
                     <h3 className="wk-sectionTitle">
-                      Inicia Sesión
+                      Inicia sesión
                     </h3>
 
                     <div className="wk-receipt">
@@ -416,8 +419,8 @@ export function FloatingFinanceWidget({
                         <label className="wk-field">
                           <span>Contraseña:</span>
                           <input
-                            type="contraseña"
-                            placeholder="Ingrese su contraseña"
+                            type="password"
+                            placeholder="Ingresa tu contraseña"
                             value={userPassword}
                             onChange={(event) => setUserPassword(event.target.value)}
                           />
@@ -442,10 +445,10 @@ export function FloatingFinanceWidget({
                       <button
                         className="wk-primary"
                         type="button"
-                        disabled={!userEmail}
+                        disabled={!userEmail.trim() || !userPassword}
                         onClick={handleLogin}
                       >
-                        Iniciar Sesión
+                        Iniciar sesión
                       </button>
                     </div> 
 
@@ -572,7 +575,7 @@ export function FloatingFinanceWidget({
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
                     title="¡Bienvenido!"
-                    text="Haz iniciado sesión correctamente">
+                    text="Has iniciado sesión correctamente">
                     <div className="wk-receipt">
                       <p>Perfil Kueski</p>
                       <Row label="Usuario:" value={loginData?.nombre ?? "Usuario"} />
@@ -585,7 +588,7 @@ export function FloatingFinanceWidget({
                       className="wk-primary"
                       type="button"
                       onClick={() => setState("simulator")}>
-                      Visualizar planes de pago 
+                      Visualizar planes de pago
                     </button>
                     <button
                       className="wk-secondary wk-returnButton"
@@ -637,7 +640,7 @@ export function FloatingFinanceWidget({
                       className="wk-primary"
                       type="button"
                       onClick={() => handleCheckout("resume")}>
-                      Pagar con WidKueski 
+                      Pagar con Widkueski
                     </button>
                     <button
                       className="wk-primary"
@@ -658,11 +661,11 @@ export function FloatingFinanceWidget({
                 {state === "card" && ( 
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
 
-                    <h3 className="wk-sectionTitle wk-underlinedTitle">Copie y pegue los datos de la tarjeta digital para pagar</h3>
+                    <h3 className="wk-sectionTitle wk-underlinedTitle">Copia y pega los datos de la tarjeta digital para pagar</h3>
 
                     <div className="wk-card" aria-label="Tarjeta digital Kueski">
                       <div className="wk-cardHeader">
-                        <span>Tarjeta Digital</span>
+                        <span>Tarjeta digital</span>
                         <strong>kueski</strong>
                       </div>
                       <div className="wk-cardNumber">
@@ -821,7 +824,7 @@ function getLoadingTitle(intent: LoadingIntent) {
     return "Generando tarjeta..."
   }
 
-  return "Iniciando Sesión..."
+  return "Iniciando sesión..."
 }
 
 function getLoadingText(intent: LoadingIntent) {
@@ -833,7 +836,7 @@ function getLoadingText(intent: LoadingIntent) {
     return "Preparando tu tarjeta digital"
   }
 
-  return "Esto solo tomara unos segundos"
+  return "Esto solo tomará unos segundos"
 }
 
 function getMockCardNumber(userId: number) {
