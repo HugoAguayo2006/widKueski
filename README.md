@@ -77,4 +77,4 @@ Plasmo crea el archivo `.zip` dentro de `build/`. Ese archivo sirve para compart
 
 ## Notas antes de subir a GitHub
 
-El proyecto ignora dependencias, builds locales, paquetes generados, caches, logs y archivos de entorno. No subas manualmente carpetas como `node_modules/`, `.plasmo/` o `build/`; se regeneran con los comandos anteriores.
+El proyecto ignora dependencias, builds locales, paquetes generados, cachés, logs y archivos de entorno. No subas manualmente carpetas como `node_modules/`, `.plasmo/` o `build/`; se regeneran con los comandos anteriores.

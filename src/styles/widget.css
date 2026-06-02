@@ -95,12 +95,20 @@
 
 .wk-brandIcon {
   align-items: center;
-  background: rgba(255, 255, 255, 0.2);
+  background: #ffffff;
   border-radius: 14px;
   display: flex;
   height: 46px;
   justify-content: center;
+  overflow: hidden;
   width: 46px;
+}
+
+.wk-brandIcon img {
+  display: block;
+  height: 34px;
+  object-fit: contain;
+  width: 34px;
 }
 
 .wk-brand h2,
@@ -712,6 +720,7 @@
 
 .wk-row b {
   color: var(--wk-ink);
+  overflow-wrap: anywhere;
   text-align: right;
 }
 
@@ -737,11 +746,66 @@
   padding: 14px;
 }
 
+.wk-metricGrid {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: 100%;
+}
+
+.wk-metricGrid div {
+  background: #f8fafc;
+  border: 1px solid var(--wk-line);
+  border-radius: 14px;
+  display: grid;
+  gap: 4px;
+  padding: 12px;
+}
+
+.wk-metricGrid span {
+  color: #64748b;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.wk-metricGrid b {
+  color: var(--wk-ink);
+  font-size: 22px;
+  font-weight: 950;
+}
+
 .wk-calendarRow span,
 .wk-calendarRow b,
 .wk-calendarRow em,
 .wk-calendar small {
   color: white;
+}
+
+.wk-calendarRow > span {
+  display: grid;
+  gap: 5px;
+}
+
+.wk-status {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 10px;
+  font-weight: 900;
+  justify-self: start;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.wk-status-pending {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.wk-status-paid {
+  background: rgba(22, 163, 74, 0.9);
+}
+
+.wk-status-overdue {
+  background: rgba(220, 38, 38, 0.9);
 }
 
 .wk-calendarRow em {

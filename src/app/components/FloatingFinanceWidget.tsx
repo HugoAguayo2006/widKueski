@@ -6,8 +6,64 @@ import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
 import { useEffect, useMemo, useState } from "react"
 
+import kueskiPayLogo from "../../Kueski-Pay.webp"
+
 type WidgetState = | "collapsed" | "expanded" | "verification" | "loading"
   | "approved" | "rejected"  | "simulator" | "confirmation" | "card" | "resume"
+type LoadingIntent = "login" | "payment" | "card"
+
+type InstallmentOption = {
+  id_oferta: number
+  monto_min?: number | string | null
+  monto_max?: number | string | null
+  quincenas: number
+  quincenas_min?: number | null
+  quincenas_max?: number | null
+  tasa_interes: number | string
+  fecha_vigencia?: string | null
+}
+
+type WidgetLoginResponse = {
+  id_usuario: number
+  kueski_user_id?: string | null
+  nombre?: string | null
+  email?: string | null
+  telefono?: string | null
+  id_credito: number
+  credito_disponible?: number | string | null
+  score_credito?: number | null
+  fecha_actualizacion?: string | null
+  installment_options: InstallmentOption[]
+}
+
+type WidgetPayment = {
+  id_numero_pago?: number | null
+  monto_pago?: number | string | null
+  fecha_vencimiento?: string | null
+  fecha_pago?: string | null
+  estado?: string | null
+}
+
+type WidgetBurnerCard = {
+  kueski_card_id?: string | null
+  numero_tokenizado?: string | null
+  fecha_expiracion?: string | null
+  estado?: string | null
+}
+
+type WidgetCheckoutResponse = {
+  id_transaccion: number
+  id_sesion?: number | null
+  id_oferta?: number | null
+  nombre?: string | null
+  email?: string | null
+  monto_total?: number | string | null
+  quincenas_seleccionadas?: number | null
+  tasa_interes?: number | string | null
+  estado?: string | null
+  pagos: WidgetPayment[]
+  burner_card?: WidgetBurnerCard | null
+}
 
 interface FloatingFinanceWidgetProps {
   productPrice: number
@@ -19,12 +75,13 @@ interface FloatingFinanceWidgetProps {
   reviewCount?: number | null
 }
 
-const availble_amount_of_installments = 12;
-const installmentOptions = Array.from({ length: availble_amount_of_installments }, (_, i) => i + 1)
-const min_stallments = 12;
-const random_ratio = 0.2;
-const timeout_for_loading = 1200;
+const API_BASE_URL = "http://127.0.0.1:8000/api/v1"
+
+const available_amount_of_installments = 12;
+const fallbackInstallmentOptions = Array.from({ length: available_amount_of_installments }, (_, i) => i + 1)
+const min_installments = 12;
 const card_timer_seconds = 60;
+const loading_timeout = 1200;
 
 export function FloatingFinanceWidget({
   productPrice,
@@ -33,19 +90,35 @@ export function FloatingFinanceWidget({
 }: FloatingFinanceWidgetProps) {
 
   const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
-  const [selectedInstallments, setSelectedInstallments] = useState(min_stallments) // Quincenas seleccionadas
+  const [selectedInstallments, setSelectedInstallments] = useState(min_installments) // Quincenas seleccionadas
   const [userEmail, setUserEmail] = useState("") // Correo del usuario
   const [userPassword, setUserPassword] = useState("") //Contraseña
   const [cardTimerSeconds, setCardTimerSeconds] = useState(card_timer_seconds)
+  const [installmentOptions, setInstallmentOptions] = useState<InstallmentOption[]>([])
+  const [loginError, setLoginError] = useState("No se encontró ningún usuario")
+  const [loginData, setLoginData] = useState<WidgetLoginResponse | null>(null)
+  const [checkoutData, setCheckoutData] = useState<WidgetCheckoutResponse | null>(null)
+  const [checkoutError, setCheckoutError] = useState("")
+  const [loadingIntent, setLoadingIntent] = useState<LoadingIntent>("login")
 
-  const interest= 0.025; // Interés por quincena
+  const selectedInstallmentOption = installmentOptions.find(
+    (option) => option.quincenas === selectedInstallments
+  )
+  const interest = Number(selectedInstallmentOption?.tasa_interes ?? 0.025)
+  const availableInstallments = installmentOptions.length
+    ? installmentOptions.map((option) => option.quincenas)
+    : fallbackInstallmentOptions
 
-  const hasInterest = selectedInstallments > 6; 
-  const totalWithInterest = hasInterest ? Math.ceil(productPrice * Math.pow(1 + interest, selectedInstallments)) : productPrice;
+  const hasInterest = interest > 0; 
+  const totalWithInterest = hasInterest ? Math.ceil(productPrice * (1 + interest)) : productPrice;
   const paymentPerInstallment = Math.ceil(totalWithInterest / selectedInstallments);
-  const minimumPayment = Math.ceil(totalWithInterest / availble_amount_of_installments);
+  const minimumInstallments = availableInstallments.at(-1) ?? available_amount_of_installments
+  const minimumPayment = Math.ceil(totalWithInterest / minimumInstallments);
 
-  const interestPercent = hasInterest ? ((totalWithInterest - productPrice) / productPrice) * 100 : 0;
+  const interestPercent = hasInterest ? interest * 100 : 0;
+  const paidPayments = checkoutData?.pagos.filter((payment) => payment.estado === "PAID").length ?? 0
+  const overduePayments = checkoutData?.pagos.filter((payment) => payment.estado === "OVERDUE").length ?? 0
+  const pendingPayments = checkoutData?.pagos.filter((payment) => payment.estado === "PENDING").length ?? 0
   const computedDiscountPercent = discountPercent ?? (
     originalPrice && originalPrice > productPrice
       ? Math.round(((originalPrice - productPrice) / originalPrice) * 100)
@@ -54,24 +127,132 @@ export function FloatingFinanceWidget({
 
   const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
 
-  // Simula la verificación de elegibilidad.
-  const simulate_check_eligibility = () => {
+  const handleLogin = async () => {
+    setLoginData(null)
+    setCheckoutData(null)
+    setCheckoutError("")
+    setLoadingIntent("login")
     setState("loading")
-    window.setTimeout(() => {
-      setState(Math.random() > random_ratio ? "approved" : "rejected")
-    }, timeout_for_loading)
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/widget/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          email: userEmail.trim(),
+          password: userPassword,
+          monto_compra: productPrice
+        })
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null)
+        setLoginError(errorData?.detail ?? "No se encontró ningún usuario")
+        window.setTimeout(() => setState("rejected"), loading_timeout)
+        return
+      }
+
+      const data = (await response.json()) as WidgetLoginResponse
+      const nextOptions = data.installment_options ?? []
+
+      if (!nextOptions.length) {
+        setLoginError("Este usuario no tiene quincenas disponibles")
+        window.setTimeout(() => setState("rejected"), loading_timeout)
+        return
+      }
+
+      setLoginData(data)
+      setInstallmentOptions(nextOptions)
+      setSelectedInstallments(nextOptions[0].quincenas)
+      setCheckoutData(null)
+      setCheckoutError("")
+      setLoginError("")
+      window.setTimeout(() => setState("approved"), loading_timeout)
+    } catch {
+      setLoginError("No se pudo conectar con el servidor")
+      window.setTimeout(() => setState("rejected"), loading_timeout)
+    }
+  }
+
+  const handleCheckout = (nextState: "resume" | "card") => {
+    setCheckoutError("")
+    setLoadingIntent(nextState === "card" ? "card" : "payment")
+
+    const now = new Date()
+    const userId = loginData?.id_usuario ?? 0
+    const expirationDate = new Date(now)
+    expirationDate.setDate(expirationDate.getDate() + 1)
+
+    const pagos = Array.from({ length: selectedInstallments }).map((_, idx) => {
+      const dueDate = new Date(now)
+      dueDate.setDate(dueDate.getDate() + (idx + 1) * 15)
+
+      return {
+        id_numero_pago: idx + 1,
+        monto_pago: paymentPerInstallment,
+        fecha_vencimiento: dueDate.toISOString(),
+        fecha_pago: null,
+        estado: "PENDING"
+      }
+    })
+
+    setCheckoutData({
+      id_transaccion: Date.now(),
+      id_sesion: null,
+      id_oferta: selectedInstallmentOption?.id_oferta ?? null,
+      nombre: loginData?.nombre ?? "NOMBRE USUARIO",
+      email: loginData?.email ?? userEmail,
+      monto_total: totalWithInterest,
+      quincenas_seleccionadas: selectedInstallments,
+      tasa_interes: interest,
+      estado: "SIMULATED",
+      pagos,
+      burner_card: {
+        kueski_card_id: `vcard_mock_${userId}`,
+        numero_tokenizado: getMockCardNumber(userId),
+        fecha_expiracion: expirationDate.toISOString(),
+        estado: "ACTIVE"
+      }
+    })
+    setState("loading")
+    window.setTimeout(() => setState(nextState), loading_timeout)
   }
 
   const paymentDates = useMemo(() =>
-    Array.from({ length: Math.min(selectedInstallments, min_stallments) }).map((_, idx) => {
+    checkoutData?.pagos?.length
+      ? checkoutData.pagos.map((payment, idx) => {
+          const date = payment.fecha_vencimiento
+            ? new Date(payment.fecha_vencimiento)
+            : new Date()
+          if (!payment.fecha_vencimiento) {
+            date.setDate(date.getDate() + (idx + 1) * 15)
+          }
+          return {
+            amount: Number(payment.monto_pago ?? paymentPerInstallment),
+            date: date.toLocaleDateString("es-MX", {
+              day: "numeric",
+              month: "short"
+            }),
+            index: payment.id_numero_pago ?? idx + 1,
+            status: payment.estado
+          }
+        })
+      : Array.from({ length: Math.min(selectedInstallments, min_installments) }).map((_, idx) => {
       const date = new Date()
       date.setDate(date.getDate() + (idx + 1) * 15)
-      return date.toLocaleDateString("es-MX", {
-        day: "numeric",
-        month: "short"
-      })
+      return {
+        amount: paymentPerInstallment,
+        date: date.toLocaleDateString("es-MX", {
+          day: "numeric",
+          month: "short"
+        }),
+        index: idx + 1,
+        status: "PENDING"
+      }
     }),
-    [selectedInstallments])
+    [checkoutData?.pagos, paymentPerInstallment, selectedInstallments])
 
   useEffect(() => {
     if (state !== "card") {
@@ -103,6 +284,13 @@ export function FloatingFinanceWidget({
   const handleStartOver = () => {
     setState("collapsed")
     setUserEmail("")
+    setUserPassword("")
+    setInstallmentOptions([])
+    setLoginData(null)
+    setCheckoutData(null)
+    setCheckoutError("")
+    setSelectedInstallments(min_installments)
+    setLoginError("No se encontró ningún usuario")
   }
 
   return (
@@ -145,7 +333,7 @@ export function FloatingFinanceWidget({
               <header className="wk-header">
                 <div className="wk-brand">
                   <div className="wk-brandIcon">
-                    <CreditCard size={30} strokeWidth={2.2} />
+                    <img src={kueskiPayLogo} alt="" aria-hidden="true" />
                   </div>
                   <div>
                     <h2>Kueski Pay</h2>
@@ -215,7 +403,7 @@ export function FloatingFinanceWidget({
                 {state === "verification" && (
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
                     <h3 className="wk-sectionTitle">
-                      Inicia Sesión
+                      Inicia sesión
                     </h3>
 
                     <div className="wk-receipt">
@@ -231,8 +419,8 @@ export function FloatingFinanceWidget({
                         <label className="wk-field">
                           <span>Contraseña:</span>
                           <input
-                            type="contraseña"
-                            placeholder="Ingrese su contraseña"
+                            type="password"
+                            placeholder="Ingresa tu contraseña"
                             value={userPassword}
                             onChange={(event) => setUserPassword(event.target.value)}
                           />
@@ -257,10 +445,10 @@ export function FloatingFinanceWidget({
                       <button
                         className="wk-primary"
                         type="button"
-                        disabled={!userEmail && !userPassword}
-                        onClick={simulate_check_eligibility}
+                        disabled={!userEmail.trim() || !userPassword}
+                        onClick={handleLogin}
                       >
-                        Iniciar Sesión
+                        Iniciar sesión
                       </button>
                     </div> 
 
@@ -273,13 +461,40 @@ export function FloatingFinanceWidget({
                     <h3 className="wk-sectionTitle">
                       Selecciona en cuántas quincenas quieres pagar:
                     </h3>
+                    <div className="wk-receipt">
+                      <p>Oferta disponible</p>
+                      <Row
+                        label="Quincenas:"
+                        value={`1 a ${selectedInstallmentOption?.quincenas_max ?? availableInstallments.at(-1)} pagos`}
+                      />
+                      <Row
+                        label="Tasa:"
+                        value={`${interestPercent.toFixed(1)}%`}
+                      />
+                      <Row
+                        label="Monto oferta:"
+                        value={`${formatCurrency(selectedInstallmentOption?.monto_min)} - ${formatCurrency(selectedInstallmentOption?.monto_max)}`}
+                      />
+                      <Row
+                        label="Vigencia:"
+                        value={formatDate(selectedInstallmentOption?.fecha_vigencia)}
+                      />
+                      <Row
+                        label="Crédito:"
+                        value={formatCurrency(loginData?.credito_disponible)}
+                      />
+                    </div>
                     <div className="wk-installments">
-                      {installmentOptions.map((num) => (
+                      {availableInstallments.map((num) => (
                         <button
                           key={num}
                           className={selectedInstallments === num ? "wk-installment wk-selected" : "wk-installment"}
                           type="button"
-                          onClick={() => setSelectedInstallments(num)}
+                          onClick={() => {
+                            setSelectedInstallments(num)
+                            setCheckoutData(null)
+                            setCheckoutError("")
+                          }}
                         >
                           {num}
                         </button>
@@ -348,10 +563,10 @@ export function FloatingFinanceWidget({
                         repeat: Infinity,
                         ease: "linear"
                       }}>
-                      <Clock size={64} />
+                        <Clock size={64} />
                     </motion.div>
-                    <h3>Iniciando Sesión...</h3>
-                    <p>Esto solo tomara unos segundos</p>
+                    <h3>{getLoadingTitle(loadingIntent)}</h3>
+                    <p>{getLoadingText(loadingIntent)}</p>
                   </motion.div>
                 )}
 
@@ -360,12 +575,20 @@ export function FloatingFinanceWidget({
                     tone="success"
                     icon={<CheckCircle2 size={58} />}
                     title="¡Bienvenido!"
-                    text="Haz iniciado sesión correctamente">
+                    text="Has iniciado sesión correctamente">
+                    <div className="wk-receipt">
+                      <p>Perfil Kueski</p>
+                      <Row label="Usuario:" value={loginData?.nombre ?? "Usuario"} />
+                      <Row label="Correo:" value={loginData?.email ?? userEmail} />
+                      <Row label="Crédito disponible:" value={formatCurrency(loginData?.credito_disponible)} />
+                      <Row label="Score:" value={loginData?.score_credito?.toString() ?? "Sin dato"} />
+                      <Row label="Actualizado:" value={formatDate(loginData?.fecha_actualizacion)} />
+                    </div>
                     <button
                       className="wk-primary"
                       type="button"
                       onClick={() => setState("simulator")}>
-                      Visualizar planes de pago 
+                      Visualizar planes de pago
                     </button>
                     <button
                       className="wk-secondary wk-returnButton"
@@ -383,6 +606,7 @@ export function FloatingFinanceWidget({
                     title="No se encontró ningún usuario"
                     text="Intenta con otro correo o nuevamente más tarde"
                   >
+                    {loginError && <p className="wk-note">{loginError}</p>}
                     <button
                       className="wk-secondary" type="button" 
                       onClick={() => setState("verification")}>Regresar</button>
@@ -406,19 +630,25 @@ export function FloatingFinanceWidget({
                           paymentPerInstallment
                         ).toLocaleString("es-MX")}`}
                       />
+                      <Row label="Usuario:" value={loginData?.nombre ?? "Usuario"} />
+                      <Row label="Correo:" value={loginData?.email ?? userEmail} />
+                      <Row label="ID oferta:" value={`${selectedInstallmentOption?.id_oferta ?? "N/A"}`} />
+                      <Row label="Tasa aplicada:" value={`${interestPercent.toFixed(1)}%`} />
+                      <Row label="Estado:" value={checkoutData?.estado ?? "SIMULATED"} />
                     </div>
                     <button
                       className="wk-primary"
                       type="button"
-                      onClick={() => setState("resume")}>
-                      Pagar con WidKueski 
+                      onClick={() => handleCheckout("resume")}>
+                      Pagar con Widkueski
                     </button>
                     <button
                       className="wk-primary"
                       type="button"
-                      onClick={() => setState("card")}>
+                      onClick={() => handleCheckout("card")}>
                       Utilizar tarjeta digital
                     </button>
+                    {checkoutError && <p className="wk-note">{checkoutError}</p>}
                     <button
                       className="wk-secondary wk-returnButton"
                       type="button"
@@ -431,23 +661,30 @@ export function FloatingFinanceWidget({
                 {state === "card" && ( 
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
 
-                    <h3 className="wk-sectionTitle wk-underlinedTitle">Copie y pegue los datos de la tarjeta digital para pagar</h3>
+                    <h3 className="wk-sectionTitle wk-underlinedTitle">Copia y pega los datos de la tarjeta digital para pagar</h3>
 
                     <div className="wk-card" aria-label="Tarjeta digital Kueski">
                       <div className="wk-cardHeader">
-                        <span>Tarjeta Digital</span>
+                        <span>Tarjeta digital</span>
                         <strong>kueski</strong>
                       </div>
                       <div className="wk-cardNumber">
-                        <span>1234</span>
-                        <span>4568</span>
-                        <span>1234</span>
-                        <span>4568</span>
+                        {(checkoutData?.burner_card?.numero_tokenizado ?? "1234 4568 1234 4568")
+                          .split(/[\s-]+/)
+                          .map((part) => (
+                            <span key={part}>{part}</span>
+                          ))}
                       </div>
                       <div className="wk-cardDetails">
-                        <span>CVV 1234</span>
+                        <span>{checkoutData?.burner_card?.estado ?? "SIMULATED"}</span>
                       </div>
-                      <p>NOMBRE USUARIO</p>
+                      <p>{checkoutData?.nombre ?? "NOMBRE USUARIO"}</p>
+                    </div>
+                    <div className="wk-receipt">
+                      <p>Datos de tarjeta</p>
+                      <Row label="ID:" value={checkoutData?.burner_card?.kueski_card_id ?? "Tarjeta simulada"} />
+                      <Row label="Estado:" value={checkoutData?.burner_card?.estado ?? "SIMULATED"} />
+                      <Row label="Expira:" value={formatDate(checkoutData?.burner_card?.fecha_expiracion)} />
                     </div>
 
                     <div className="wk-cardTimer" aria-live="polite">
@@ -479,18 +716,37 @@ export function FloatingFinanceWidget({
                     icon={<CheckCircle2 size={58} />}
                     title="¡Compra confirmada!"
                     text="Recibirás un correo con los detalles de tu financiamiento">
+                    <div className="wk-metricGrid">
+                      <div>
+                        <span>Pagados</span>
+                        <b>{paidPayments}</b>
+                      </div>
+                      <div>
+                        <span>Pendientes</span>
+                        <b>{pendingPayments}</b>
+                      </div>
+                      <div>
+                        <span>Atrasados</span>
+                        <b>{overduePayments}</b>
+                      </div>
+                    </div>
                     <div className="wk-summary wk-calendar">
                       <p style={{color: "#fff"}}>Tu calendario de pagos</p>
-                      {paymentDates.slice(0, 4).map((date, idx) => (
-                        <div className="wk-calendarRow" key={date}>
-                          <span>Pago {idx + 1}</span>
+                      {paymentDates.slice(0, 4).map((payment) => (
+                        <div className="wk-calendarRow" key={`${payment.index}-${payment.date}`}>
+                          <span>
+                            Pago {payment.index}
+                            <small className={`wk-status wk-status-${String(payment.status).toLowerCase()}`}>
+                              {getPaymentStatusLabel(payment.status)}
+                            </small>
+                          </span>
                           <b>
                             $
-                            {Math.ceil(paymentPerInstallment).toLocaleString(
+                            {Math.ceil(payment.amount).toLocaleString(
                               "es-MX"
                             )}
                           </b>
-                          <em>{date}</em>
+                          <em>{payment.date}</em>
                         </div>
                       ))}
                       {selectedInstallments > 4 && (
@@ -512,6 +768,80 @@ export function FloatingFinanceWidget({
       </AnimatePresence>
     </div>
   )
+}
+
+function formatCurrency(value?: number | string | null) {
+  if (value === null || value === undefined || value === "") {
+    return "Sin dato"
+  }
+
+  const numericValue = Number(value)
+  if (Number.isNaN(numericValue)) {
+    return "Sin dato"
+  }
+
+  return `$${numericValue.toLocaleString("es-MX", {
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 0
+  })}`
+}
+
+function formatDate(value?: string | null) {
+  if (!value) {
+    return "Sin dato"
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return "Sin dato"
+  }
+
+  return date.toLocaleDateString("es-MX", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  })
+}
+
+function getPaymentStatusLabel(status?: string | null) {
+  if (status === "PAID") {
+    return "Pagado"
+  }
+
+  if (status === "OVERDUE") {
+    return "Atrasado"
+  }
+
+  return "Pendiente"
+}
+
+function getLoadingTitle(intent: LoadingIntent) {
+  if (intent === "payment") {
+    return "Procesando pago..."
+  }
+
+  if (intent === "card") {
+    return "Generando tarjeta..."
+  }
+
+  return "Iniciando sesión..."
+}
+
+function getLoadingText(intent: LoadingIntent) {
+  if (intent === "payment") {
+    return "Estamos confirmando tu compra"
+  }
+
+  if (intent === "card") {
+    return "Preparando tu tarjeta digital"
+  }
+
+  return "Esto solo tomará unos segundos"
+}
+
+function getMockCardNumber(userId: number) {
+  const suffix = String(1000 + userId).slice(-4)
+  return `4152 7391 0846 ${suffix}`
 }
 
 function BenefitCard({ icon, text }: { icon: ReactNode; text: string }) {
