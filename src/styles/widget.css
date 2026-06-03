@@ -303,12 +303,22 @@
   line-height: 1.15;
 }
 
+.wk-priceStats a,
 .wk-priceStats b {
   color: var(--wk-ink);
   font-size: 13px;
   font-weight: 950;
   line-height: 1.1;
   overflow-wrap: anywhere;
+}
+
+.wk-priceStats a {
+  color: var(--wk-blue);
+  text-decoration: none;
+}
+
+.wk-priceStats a:hover {
+  text-decoration: underline;
 }
 
 .wk-comparisonRow {
@@ -340,6 +350,12 @@
   flex: 0 0 auto;
   font-size: 14px;
   font-weight: 950;
+}
+
+.wk-comparisonRowDisabled {
+  cursor: default;
+  opacity: 0.68;
+  pointer-events: none;
 }
 
 .wk-comparisonHigher b {
@@ -440,6 +456,18 @@
   background: #8da5ee;
   border-color: #8da5ee;
   cursor: not-allowed;
+}
+
+.wk-compatNotice {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-radius: 12px;
+  color: #1e3a8a;
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.35;
+  margin: 0;
+  padding: 10px 12px;
 }
 
 .wk-secondary {
@@ -740,6 +768,7 @@
 .wk-cardHeader,
 .wk-cardNumber,
 .wk-cardDetails,
+.wk-cardMeta,
 .wk-card p {
   position: relative;
   z-index: 1;
@@ -785,7 +814,8 @@
 .wk-cardDetails {
   align-items: center;
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto;
+  gap: 16px;
   margin-top: 2px;
 }
 
@@ -793,6 +823,29 @@
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 2.2px;
+}
+
+.wk-cardMeta {
+  align-items: flex-end;
+  display: grid;
+  gap: 2px;
+  justify-items: end;
+}
+
+.wk-cardMeta small {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 7px;
+  font-weight: 850;
+  letter-spacing: 1px;
+  line-height: 1;
+}
+
+.wk-cardMeta b {
+  color: white;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  line-height: 1;
 }
 
 .wk-cardValid {

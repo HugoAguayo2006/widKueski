@@ -48,6 +48,7 @@ type WidgetBurnerCard = {
   kueski_card_id?: string | null
   numero_tokenizado?: string | null
   fecha_expiracion?: string | null
+  cvv?: string | null
   estado?: string | null
 }
 
@@ -69,6 +70,8 @@ interface FloatingFinanceWidgetProps {
   productPrice: number
   productName?: string
   productDescription?: string
+  productUrl?: string
+  currentStore?: string
   originalPrice?: number | null
   discountPercent?: number | null
   rating?: number | null
@@ -81,6 +84,13 @@ type ShoppingComparison = {
   price: number
   display_price?: string | null
   link?: string | null
+  url?: string | null
+  product_url?: string | null
+  product_link?: string | null
+  direct_link?: string | null
+  merchant_link?: string | null
+  source_link?: string | null
+  serpapi_product_api?: string | null
   thumbnail?: string | null
 }
 
@@ -94,11 +104,19 @@ const fallbackInstallmentOptions = Array.from({ length: available_amount_of_inst
 const min_installments = 12;
 const card_timer_seconds = 60;
 const loading_timeout = 1200;
+const KUESKI_PAY_COMPATIBLE_DOMAINS = [
+  "amazon.com.mx",
+  "elpalaciodehierro.com",
+  "highstreet.com.mx",
+  "skims.com.mx",
+  "tigresport.mx",
+  "pcel.com"
+]
 
 export function FloatingFinanceWidget({
   productPrice,
   productName = "Este producto",
-  productDescription, originalPrice, discountPercent, rating, reviewCount
+  productDescription, productUrl, currentStore, originalPrice, discountPercent, rating, reviewCount
 }: FloatingFinanceWidgetProps) {
 
   const [state, setState] = useState<WidgetState>("collapsed") // Estado del widget
@@ -134,6 +152,10 @@ export function FloatingFinanceWidget({
   const paidPayments = checkoutData?.pagos.filter((payment) => payment.estado === "PAID").length ?? 0
   const overduePayments = checkoutData?.pagos.filter((payment) => payment.estado === "OVERDUE").length ?? 0
   const pendingPayments = checkoutData?.pagos.filter((payment) => payment.estado === "PENDING").length ?? 0
+  const isKueskiPayCompatibleStore = useMemo(
+    () => isCompatibleKueskiPayStore(currentStore, productUrl),
+    [currentStore, productUrl]
+  )
   const computedDiscountPercent = discountPercent ?? (
     originalPrice && originalPrice > productPrice
       ? Math.round(((originalPrice - productPrice) / originalPrice) * 100)
@@ -145,9 +167,18 @@ export function FloatingFinanceWidget({
     () => shoppingComparisons.filter((item) => !isCurrentStoreResult(item.store)),
     [shoppingComparisons]
   )
+  const currentStoreComparison = useMemo<ShoppingComparison>(
+    () => ({
+      link: productUrl,
+      price: productPrice,
+      store: currentStore ?? "Tienda actual",
+      title: productName
+    }),
+    [currentStore, productName, productPrice, productUrl]
+  )
   const shoppingPriceStats = useMemo(
-    () => getPriceStats([productPrice, ...filteredShoppingComparisons.map((item) => item.price)]),
-    [filteredShoppingComparisons, productPrice]
+    () => getPriceStats([currentStoreComparison, ...filteredShoppingComparisons]),
+    [currentStoreComparison, filteredShoppingComparisons]
   )
 
   useEffect(() => {
@@ -162,14 +193,31 @@ export function FloatingFinanceWidget({
       setComparisonError("")
 
       try {
-        const query = encodeURIComponent(productName)
+        const searchParams = new URLSearchParams({
+          current_product_name: productName,
+          current_product_price: String(productPrice),
+          product_name: productName
+        })
+
+        if (productUrl) {
+          searchParams.set("current_product_url", productUrl)
+        }
+
+        if (currentStore) {
+          searchParams.set("current_store", currentStore)
+        }
+
+        if (originalPrice) {
+          searchParams.set("current_original_price", String(originalPrice))
+        }
+
         let response: Response | null = null
         let lastConnectionError: unknown = null
 
         for (const baseUrl of API_BASE_URLS) {
           try {
             response = await fetch(
-              `${baseUrl}/shopping/compare?product_name=${query}`
+              `${baseUrl}/shopping/compare?${searchParams.toString()}`
             )
             break
           } catch (error) {
@@ -208,7 +256,7 @@ export function FloatingFinanceWidget({
     return () => {
       isMounted = false
     }
-  }, [state, productName])
+  }, [currentStore, originalPrice, productName, productPrice, productUrl, state])
 
   const handleLogin = async () => {
     setLoginData(null)
@@ -313,6 +361,7 @@ export function FloatingFinanceWidget({
         kueski_card_id: `vcard_mock_${userId}`,
         numero_tokenizado: getMockCardNumber(userId),
         fecha_expiracion: expirationDate.toISOString(),
+        cvv: getMockCardCvv(userId),
         estado: "ACTIVE"
       }
     })
@@ -509,7 +558,18 @@ export function FloatingFinanceWidget({
                             <div className="wk-priceStats" aria-label="Resumen histórico de precios">
                               <div>
                                 <span>Mín. histórico</span>
-                                <b>{formatCurrency(shoppingPriceStats.min)}</b>
+                                {getShoppingItemUrl(shoppingPriceStats.minOffer) ? (
+                                  <a
+                                    href={getShoppingItemUrl(shoppingPriceStats.minOffer)}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                    aria-label={`Ver oferta mínima en ${getShoppingItemLabel(shoppingPriceStats.minOffer)}`}
+                                  >
+                                    {formatCurrency(shoppingPriceStats.minOffer.price)}
+                                  </a>
+                                ) : (
+                                  <b>{formatCurrency(shoppingPriceStats.minOffer.price)}</b>
+                                )}
                               </div>
                               <div>
                                 <span>Promedio</span>
@@ -517,7 +577,18 @@ export function FloatingFinanceWidget({
                               </div>
                               <div>
                                 <span>Máx. histórico</span>
-                                <b>{formatCurrency(shoppingPriceStats.max)}</b>
+                                {getShoppingItemUrl(shoppingPriceStats.maxOffer) ? (
+                                  <a
+                                    href={getShoppingItemUrl(shoppingPriceStats.maxOffer)}
+                                    rel="noopener noreferrer"
+                                    target="_blank"
+                                    aria-label={`Ver oferta máxima en ${getShoppingItemLabel(shoppingPriceStats.maxOffer)}`}
+                                  >
+                                    {formatCurrency(shoppingPriceStats.maxOffer.price)}
+                                  </a>
+                                ) : (
+                                  <b>{formatCurrency(shoppingPriceStats.maxOffer.price)}</b>
+                                )}
                               </div>
                             </div>
                           )}
@@ -525,18 +596,23 @@ export function FloatingFinanceWidget({
                             <span>Precio actual</span>
                             <b>${productPrice.toLocaleString("es-MX")}</b>
                           </div>
-                          {filteredShoppingComparisons.slice(0, 5).map((item, index) => (
-                            <a
-                              className={`wk-comparisonRow ${getComparisonToneClass(item.price, productPrice)}`}
-                              href={item.link ?? undefined}
-                              key={`${item.store ?? "store"}-${item.title ?? index}`}
-                              rel="noreferrer"
-                              target="_blank"
-                            >
-                              <span>{item.store ?? "Tienda"}</span>
-                              <b>{formatCurrency(item.price)}</b>
-                            </a>
-                          ))}
+                          {filteredShoppingComparisons.slice(0, 5).map((item, index) => {
+                            const itemUrl = getShoppingItemUrl(item)
+
+                            return (
+                              <a
+                                className={`wk-comparisonRow ${getComparisonToneClass(item.price, productPrice)} ${itemUrl ? "" : "wk-comparisonRowDisabled"}`}
+                                href={itemUrl ?? undefined}
+                                key={`${item.store ?? "store"}-${item.title ?? index}`}
+                                rel="noopener noreferrer"
+                                target="_blank"
+                                aria-label={`Ver producto en ${getShoppingItemLabel(item)}`}
+                              >
+                                <span>{item.store ?? "Tienda"}</span>
+                                <b>{formatCurrency(item.price)}</b>
+                              </a>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
@@ -790,13 +866,23 @@ export function FloatingFinanceWidget({
                       <Row label="ID oferta:" value={`${selectedInstallmentOption?.id_oferta ?? "N/A"}`} />
                       <Row label="Tasa aplicada:" value={`${interestPercent.toFixed(1)}%`} />
                       <Row label="Estado:" value={checkoutData?.estado ?? "SIMULATED"} />
+                      <Row
+                        label="Kueski Pay:"
+                        value={isKueskiPayCompatibleStore ? "Disponible en esta tienda" : "No disponible en esta tienda"}
+                      />
                     </div>
-                    <button
-                      className="wk-primary"
-                      type="button"
-                      onClick={() => handleCheckout("resume")}>
-                      Pagar con Widkueski
-                    </button>
+                    {isKueskiPayCompatibleStore ? (
+                      <button
+                        className="wk-primary"
+                        type="button"
+                        onClick={() => handleCheckout("resume")}>
+                        Pagar con Widkueski
+                      </button>
+                    ) : (
+                      <p className="wk-compatNotice">
+                        Esta tienda no acepta Kueski Pay directo. Puedes usar la tarjeta virtual para completar el pago.
+                      </p>
+                    )}
                     <button
                       className="wk-primary"
                       type="button"
@@ -832,12 +918,21 @@ export function FloatingFinanceWidget({
                       </div>
                       <div className="wk-cardDetails">
                         <span>{checkoutData?.burner_card?.estado ?? "SIMULATED"}</span>
+                        <span className="wk-cardMeta">
+                          <small>EXP</small>
+                          <b>{formatCardExpiration(checkoutData?.burner_card?.fecha_expiracion)}</b>
+                        </span>
+                        <span className="wk-cardMeta">
+                          <small>CVV</small>
+                          <b>{checkoutData?.burner_card?.cvv ?? "123"}</b>
+                        </span>
                       </div>
                       <p>{checkoutData?.nombre ?? "NOMBRE USUARIO"}</p>
                     </div>
                     <div className="wk-receipt">
                       <p>Datos de tarjeta</p>
                       <Row label="ID:" value={checkoutData?.burner_card?.kueski_card_id ?? "Tarjeta simulada"} />
+                      <Row label="CVV:" value={checkoutData?.burner_card?.cvv ?? "123"} />
                       <Row label="Estado:" value={checkoutData?.burner_card?.estado ?? "SIMULATED"} />
                       <Row label="Expira:" value={formatDate(checkoutData?.burner_card?.fecha_expiracion)} />
                     </div>
@@ -999,6 +1094,23 @@ function getMockCardNumber(userId: number) {
   return `4152 7391 0846 ${suffix}`
 }
 
+function getMockCardCvv(userId: number) {
+  return String(100 + ((userId * 73) % 900)).padStart(3, "0")
+}
+
+function formatCardExpiration(value?: string | null) {
+  if (!value) {
+    return "00/00"
+  }
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) {
+    return "00/00"
+  }
+
+  return `${String(date.getMonth() + 1).padStart(2, "0")}/${String(date.getFullYear()).slice(-2)}`
+}
+
 function getComparisonToneClass(price: number, currentPrice: number) {
   if (price > currentPrice) {
     return "wk-comparisonHigher"
@@ -1011,19 +1123,86 @@ function getComparisonToneClass(price: number, currentPrice: number) {
   return "wk-comparisonSame"
 }
 
-function getPriceStats(prices: number[]) {
-  const validPrices = prices.filter((price) => Number.isFinite(price) && price > 0)
+function getPriceStats(items: ShoppingComparison[]) {
+  const validItems = items.filter((item) => Number.isFinite(item.price) && item.price > 0)
 
-  if (!validPrices.length) {
+  if (!validItems.length) {
     return null
   }
 
-  const total = validPrices.reduce((sum, price) => sum + price, 0)
+  const total = validItems.reduce((sum, item) => sum + item.price, 0)
+  const minOffer = validItems.reduce((minItem, item) =>
+    item.price < minItem.price ? item : minItem
+  )
+  const maxOffer = validItems.reduce((maxItem, item) =>
+    item.price > maxItem.price ? item : maxItem
+  )
 
   return {
-    average: total / validPrices.length,
-    max: Math.max(...validPrices),
-    min: Math.min(...validPrices)
+    average: total / validItems.length,
+    maxOffer,
+    minOffer
+  }
+}
+
+function getShoppingItemLabel(item: ShoppingComparison) {
+  return item.store || item.title || "Google Shopping"
+}
+
+function getShoppingItemUrl(item: ShoppingComparison) {
+  const candidateUrls = [
+    item.link,
+    item.url,
+    item.product_url,
+    item.product_link,
+    item.direct_link,
+    item.merchant_link,
+    item.source_link,
+    item.serpapi_product_api
+  ]
+
+  return candidateUrls.find((url) => isHttpUrl(url)) ?? null
+}
+
+function isHttpUrl(value?: string | null) {
+  return Boolean(value && /^https?:\/\//i.test(value))
+}
+
+function isCompatibleKueskiPayStore(store?: string | null, productUrl?: string | null) {
+  const hostname = normalizeHostname(store) ?? getHostnameFromUrl(productUrl)
+
+  if (!hostname) {
+    return false
+  }
+
+  return KUESKI_PAY_COMPATIBLE_DOMAINS.some((domain) =>
+    hostname === domain || hostname.endsWith(`.${domain}`)
+  )
+}
+
+function normalizeHostname(value?: string | null) {
+  if (!value) {
+    return null
+  }
+
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^https?:\/\//, "")
+    .replace(/^www\./, "")
+    .split("/")[0]
+    .split(":")[0] || null
+}
+
+function getHostnameFromUrl(value?: string | null) {
+  if (!value) {
+    return null
+  }
+
+  try {
+    return normalizeHostname(new URL(value).hostname)
+  } catch {
+    return null
   }
 }
 

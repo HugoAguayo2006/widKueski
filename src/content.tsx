@@ -88,6 +88,8 @@ export default function ContentWidget() {
       productPrice={product.price}
       productName={product.name}
       productDescription={product.description}
+      productUrl={location.href}
+      currentStore={location.hostname}
       originalPrice={product.originalPrice}
       discountPercent={product.discountPercent}
       rating={product.rating}
