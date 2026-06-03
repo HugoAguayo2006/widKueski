@@ -75,7 +75,10 @@ interface FloatingFinanceWidgetProps {
   reviewCount?: number | null
 }
 
-const API_BASE_URL = "http://127.0.0.1:8000/api/v1"
+const API_BASE_URLS = [
+  "http://127.0.0.1:8000/api/v1",
+  "http://localhost:8000/api/v1"
+]
 
 const available_amount_of_installments = 12;
 const fallbackInstallmentOptions = Array.from({ length: available_amount_of_installments }, (_, i) => i + 1)
@@ -135,17 +138,34 @@ export function FloatingFinanceWidget({
     setState("loading")
 
     try {
-      const response = await fetch(`${API_BASE_URL}/widget/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          email: userEmail.trim(),
-          password: userPassword,
-          monto_compra: productPrice
-        })
-      })
+      const loginPayload = {
+        email: userEmail.trim(),
+        password: userPassword.trim(),
+        monto_compra: productPrice
+      }
+
+      let response: Response | null = null
+      let lastConnectionError: unknown = null
+
+      for (const baseUrl of API_BASE_URLS) {
+        try {
+          response = await fetch(`${baseUrl}/widget/login`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify(loginPayload)
+          })
+          break
+        } catch (error) {
+          lastConnectionError = error
+        }
+      }
+
+      if (!response) {
+        console.error("WidKueski API connection failed", lastConnectionError)
+        throw lastConnectionError
+      }
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null)
