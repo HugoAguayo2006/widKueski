@@ -141,8 +141,13 @@ export function FloatingFinanceWidget({
   )
 
   const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
-  const filteredShoppingComparisons = shoppingComparisons.filter(
-    (item) => !isCurrentStoreResult(item.store)
+  const filteredShoppingComparisons = useMemo(
+    () => shoppingComparisons.filter((item) => !isCurrentStoreResult(item.store)),
+    [shoppingComparisons]
+  )
+  const shoppingPriceStats = useMemo(
+    () => getPriceStats([productPrice, ...filteredShoppingComparisons.map((item) => item.price)]),
+    [filteredShoppingComparisons, productPrice]
   )
 
   useEffect(() => {
@@ -500,6 +505,22 @@ export function FloatingFinanceWidget({
 
                       {!isLoadingComparisons && filteredShoppingComparisons.length > 0 && (
                         <div className="wk-comparisonList">
+                          {shoppingPriceStats && (
+                            <div className="wk-priceStats" aria-label="Resumen histórico de precios">
+                              <div>
+                                <span>Mín. histórico</span>
+                                <b>{formatCurrency(shoppingPriceStats.min)}</b>
+                              </div>
+                              <div>
+                                <span>Promedio</span>
+                                <b>{formatCurrency(shoppingPriceStats.average)}</b>
+                              </div>
+                              <div>
+                                <span>Máx. histórico</span>
+                                <b>{formatCurrency(shoppingPriceStats.max)}</b>
+                              </div>
+                            </div>
+                          )}
                           <div className="wk-comparisonRow wk-currentStore">
                             <span>Precio actual</span>
                             <b>${productPrice.toLocaleString("es-MX")}</b>
@@ -988,6 +1009,22 @@ function getComparisonToneClass(price: number, currentPrice: number) {
   }
 
   return "wk-comparisonSame"
+}
+
+function getPriceStats(prices: number[]) {
+  const validPrices = prices.filter((price) => Number.isFinite(price) && price > 0)
+
+  if (!validPrices.length) {
+    return null
+  }
+
+  const total = validPrices.reduce((sum, price) => sum + price, 0)
+
+  return {
+    average: total / validPrices.length,
+    max: Math.max(...validPrices),
+    min: Math.min(...validPrices)
+  }
 }
 
 function isCurrentStoreResult(store?: string | null) {

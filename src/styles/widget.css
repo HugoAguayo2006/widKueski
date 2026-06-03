@@ -280,6 +280,37 @@
   gap: 8px;
 }
 
+.wk-priceStats {
+  display: grid;
+  gap: 8px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.wk-priceStats div {
+  background: #fff;
+  border: 1px solid #dbeafe;
+  border-radius: 10px;
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+  padding: 8px;
+}
+
+.wk-priceStats span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.15;
+}
+
+.wk-priceStats b {
+  color: var(--wk-ink);
+  font-size: 13px;
+  font-weight: 950;
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
 .wk-comparisonRow {
   align-items: center;
   background: #fff;
