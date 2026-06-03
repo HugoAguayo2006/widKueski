@@ -75,6 +75,15 @@ interface FloatingFinanceWidgetProps {
   reviewCount?: number | null
 }
 
+type ShoppingComparison = {
+  title?: string | null
+  store?: string | null
+  price: number
+  display_price?: string | null
+  link?: string | null
+  thumbnail?: string | null
+}
+
 const API_BASE_URLS = [
   "http://127.0.0.1:8000/api/v1",
   "http://localhost:8000/api/v1"
@@ -103,6 +112,9 @@ export function FloatingFinanceWidget({
   const [checkoutData, setCheckoutData] = useState<WidgetCheckoutResponse | null>(null)
   const [checkoutError, setCheckoutError] = useState("")
   const [loadingIntent, setLoadingIntent] = useState<LoadingIntent>("login")
+  const [shoppingComparisons, setShoppingComparisons] = useState<ShoppingComparison[]>([])
+  const [isLoadingComparisons, setIsLoadingComparisons] = useState(false)
+  const [comparisonError, setComparisonError] = useState("")
 
   const selectedInstallmentOption = installmentOptions.find(
     (option) => option.quincenas === selectedInstallments
@@ -129,6 +141,69 @@ export function FloatingFinanceWidget({
   )
 
   const starCount = rating ? Math.max(1, Math.min(5, Math.round(rating))) : 0
+  const filteredShoppingComparisons = shoppingComparisons.filter(
+    (item) => !isCurrentStoreResult(item.store)
+  )
+
+  useEffect(() => {
+    if (state !== "expanded" || !productName) {
+      return
+    }
+
+    let isMounted = true
+
+    const loadShoppingComparisons = async () => {
+      setIsLoadingComparisons(true)
+      setComparisonError("")
+
+      try {
+        const query = encodeURIComponent(productName)
+        let response: Response | null = null
+        let lastConnectionError: unknown = null
+
+        for (const baseUrl of API_BASE_URLS) {
+          try {
+            response = await fetch(
+              `${baseUrl}/shopping/compare?product_name=${query}`
+            )
+            break
+          } catch (error) {
+            lastConnectionError = error
+          }
+        }
+
+        if (!response) {
+          console.error("WidKueski shopping API connection failed", lastConnectionError)
+          throw lastConnectionError
+        }
+
+        if (!response.ok) {
+          throw new Error("No se pudieron consultar precios")
+        }
+
+        const data = await response.json()
+
+        if (isMounted) {
+          setShoppingComparisons(data.results ?? [])
+        }
+      } catch {
+        if (isMounted) {
+          setShoppingComparisons([])
+          setComparisonError("No se pudieron cargar precios comparativos")
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingComparisons(false)
+        }
+      }
+    }
+
+    loadShoppingComparisons()
+
+    return () => {
+      isMounted = false
+    }
+  }, [state, productName])
 
   const handleLogin = async () => {
     setLoginData(null)
@@ -404,6 +479,45 @@ export function FloatingFinanceWidget({
                         <CreditCard size={22} />
                         O desde ${minimumPayment.toLocaleString("es-MX")} quincenales con Kueski
                       </div>
+                    </div>
+                    <div className="wk-comparison">
+                      <div className="wk-comparisonHeader">
+                        <span>Comparación de precios</span>
+                        <small>Google Shopping</small>
+                      </div>
+
+                      {isLoadingComparisons && (
+                        <p className="wk-comparisonEmpty">Buscando precios...</p>
+                      )}
+
+                      {!isLoadingComparisons && comparisonError && (
+                        <p className="wk-comparisonEmpty">{comparisonError}</p>
+                      )}
+
+                      {!isLoadingComparisons && !comparisonError && filteredShoppingComparisons.length === 0 && (
+                        <p className="wk-comparisonEmpty">No encontramos precios similares</p>
+                      )}
+
+                      {!isLoadingComparisons && filteredShoppingComparisons.length > 0 && (
+                        <div className="wk-comparisonList">
+                          <div className="wk-comparisonRow wk-currentStore">
+                            <span>Precio actual</span>
+                            <b>${productPrice.toLocaleString("es-MX")}</b>
+                          </div>
+                          {filteredShoppingComparisons.slice(0, 5).map((item, index) => (
+                            <a
+                              className={`wk-comparisonRow ${getComparisonToneClass(item.price, productPrice)}`}
+                              href={item.link ?? undefined}
+                              key={`${item.store ?? "store"}-${item.title ?? index}`}
+                              rel="noreferrer"
+                              target="_blank"
+                            >
+                              <span>{item.store ?? "Tienda"}</span>
+                              <b>{formatCurrency(item.price)}</b>
+                            </a>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <div className="wk-benefitGrid">
                       <BenefitCard icon={<Shield size={22} />} text="Sin tarjeta de crédito" />
@@ -862,6 +976,42 @@ function getLoadingText(intent: LoadingIntent) {
 function getMockCardNumber(userId: number) {
   const suffix = String(1000 + userId).slice(-4)
   return `4152 7391 0846 ${suffix}`
+}
+
+function getComparisonToneClass(price: number, currentPrice: number) {
+  if (price > currentPrice) {
+    return "wk-comparisonHigher"
+  }
+
+  if (price < currentPrice) {
+    return "wk-comparisonLower"
+  }
+
+  return "wk-comparisonSame"
+}
+
+function isCurrentStoreResult(store?: string | null) {
+  if (!store || typeof location === "undefined") {
+    return false
+  }
+
+  const hostname = location.hostname.toLowerCase()
+  const normalizedStore = store.toLowerCase()
+  const currentStoreNames = [
+    { host: "amazon.", names: ["amazon"] },
+    { host: "liverpool.com.mx", names: ["liverpool"] },
+    { host: "zara.", names: ["zara"] },
+    { host: "walmart.", names: ["walmart"] },
+    { host: "mercadolibre.", names: ["mercado libre", "mercadolibre"] }
+  ]
+
+  const currentStore = currentStoreNames.find((storeInfo) =>
+    hostname.includes(storeInfo.host)
+  )
+
+  return currentStore
+    ? currentStore.names.some((name) => normalizedStore.includes(name))
+    : false
 }
 
 function BenefitCard({ icon, text }: { icon: ReactNode; text: string }) {
