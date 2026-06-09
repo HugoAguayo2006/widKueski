@@ -15,7 +15,7 @@ Clona el repositorio e instala las dependencias:
 ```bash
 git clone <URL_DEL_REPOSITORIO>
 cd widkueski
-npm install
+
 ```
 
 ## Ejecutar en desarrollo
