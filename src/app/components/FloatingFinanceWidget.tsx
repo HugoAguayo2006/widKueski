@@ -4,7 +4,7 @@ import {
 } from "lucide-react"
 import { AnimatePresence, motion } from "motion/react"
 import type { ReactNode } from "react"
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react"
 
 import kueskiPayLogo from "../../Kueski-Pay.webp"
 
@@ -139,6 +139,7 @@ export function FloatingFinanceWidget({
   const [isLoadingComparisons, setIsLoadingComparisons] = useState(false)
   const [comparisonError, setComparisonError] = useState("")
   const [showAllPayments, setShowAllPayments] = useState(false)
+  const bodyRef = useRef<HTMLDivElement | null>(null)
 
   const selectedInstallmentOption = installmentOptions.find(
     (option) => option.quincenas === selectedInstallments
@@ -187,6 +188,13 @@ export function FloatingFinanceWidget({
     () => getPriceStats([currentStoreComparison, ...filteredShoppingComparisons]),
     [currentStoreComparison, filteredShoppingComparisons]
   )
+
+  useLayoutEffect(() => {
+    bodyRef.current?.scrollTo({
+      left: 0,
+      top: 0
+    })
+  }, [state])
 
   useEffect(() => {
     if (state !== "expanded" || !productName) {
@@ -329,7 +337,7 @@ export function FloatingFinanceWidget({
       id_transaccion: Date.now(),
       id_sesion: null,
       id_oferta: selectedInstallmentOption?.id_oferta ?? null,
-      nombre: loginData?.nombre ?? "NOMBRE USUARIO",
+      nombre: loginData?.nombre ?? "Usuario",
       email: loginData?.email ?? userEmail,
       monto_total: totalWithInterest,
       quincenas_seleccionadas: selectedInstallments,
@@ -483,7 +491,7 @@ export function FloatingFinanceWidget({
                 </button>
               </header>
 
-              <div className="wk-body">
+              <div className="wk-body" ref={bodyRef}>
 
                 {state === "expanded" && (
                   <motion.div className="wk-stack" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -679,7 +687,7 @@ export function FloatingFinanceWidget({
                       <p>Oferta disponible</p>
                       <Row
                         label="Quincenas:"
-                        value={`1 a ${selectedInstallmentOption?.quincenas_max ?? availableInstallments.at(-1)} pagos`}
+                        value={`1 a ${selectedInstallmentOption?.quincenas_max ?? availableInstallments.at(-1)} quincenas`}
                       />
                       <Row
                         label="Tasa:"
@@ -824,7 +832,7 @@ export function FloatingFinanceWidget({
 
                 {state === "confirmation" && ( 
                   <motion.div className="wk-stack" initial={{ opacity: 0, x: 18 }} animate={{ opacity: 1, x: 0 }}>
-                    <h3 className="wk-sectionTitle wk-underlinedTitle">Previo a continuar, revisa toda la información:</h3>
+                    <h3 className="wk-sectionTitle wk-underlinedTitle">Antes de continuar, revisa toda la información:</h3>
 
                     <div className="wk-receipt">
                       <p>Confirmación de plan de pagos</p>
@@ -843,7 +851,7 @@ export function FloatingFinanceWidget({
                       <Row label="Correo:" value={loginData?.email ?? userEmail} />
                       <Row label="ID de oferta:" value={`${selectedInstallmentOption?.id_oferta ?? "N/A"}`} />
                       <Row label="Tasa aplicada:" value={`${interestPercent.toFixed(1)}%`} />
-                      <Row label="Estado:" value={checkoutData?.estado ?? "SIMULATED"} />
+                      <Row label="Estado:" value={formatTransactionStatus(checkoutData?.estado ?? "SIMULATED")} />
                       <Row
                         label="Kueski Pay:"
                         value={isKueskiPayCompatibleStore ? "Disponible en esta tienda" : "No disponible en esta tienda"}
@@ -854,7 +862,7 @@ export function FloatingFinanceWidget({
                         className="wk-primary"
                         type="button"
                         onClick={() => handleCheckout("resume")}>
-                        Pagar con Widkueski
+                        Pagar con Kueski Pay
                       </button>
                     ) : (
                       <p className="wk-compatNotice">
@@ -895,7 +903,7 @@ export function FloatingFinanceWidget({
                           ))}
                       </div>
                       <div className="wk-cardDetails">
-                        <span>{checkoutData?.burner_card?.estado ?? "SIMULATED"}</span>
+                        <span>{formatCardStatus(checkoutData?.burner_card?.estado)}</span>
                         <span className="wk-cardMeta">
                           <small>EXP</small>
                           <b>{formatCardExpiration(checkoutData?.burner_card?.fecha_expiracion)}</b>
@@ -905,13 +913,13 @@ export function FloatingFinanceWidget({
                           <b>{checkoutData?.burner_card?.cvv ?? "123"}</b>
                         </span>
                       </div>
-                      <p>{checkoutData?.nombre ?? "NOMBRE USUARIO"}</p>
+                      <p>{checkoutData?.nombre ?? "Usuario"}</p>
                     </div>
                     <div className="wk-receipt">
                       <p>Datos de tarjeta</p>
                       <Row label="ID:" value={checkoutData?.burner_card?.kueski_card_id ?? "Tarjeta simulada"} />
                       <Row label="CVV:" value={checkoutData?.burner_card?.cvv ?? "123"} />
-                      <Row label="Estado:" value={checkoutData?.burner_card?.estado ?? "SIMULATED"} />
+                      <Row label="Estado:" value={formatCardStatus(checkoutData?.burner_card?.estado)} />
                       <Row label="Vence:" value={formatDate(checkoutData?.burner_card?.fecha_expiracion)} />
                     </div>
 
@@ -1139,6 +1147,46 @@ function getPaymentStatusLabel(status?: string | null) {
   return "Pendiente"
 }
 
+function formatTransactionStatus(status?: string | null) {
+  if (status === "SIMULATED") {
+    return "Simulado"
+  }
+
+  if (status === "APPROVED") {
+    return "Aprobado"
+  }
+
+  if (status === "REJECTED") {
+    return "Rechazado"
+  }
+
+  if (status === "PENDING") {
+    return "Pendiente"
+  }
+
+  return status || "Sin dato"
+}
+
+function formatCardStatus(status?: string | null) {
+  if (status === "ACTIVE") {
+    return "Activa"
+  }
+
+  if (status === "SIMULATED") {
+    return "Simulada"
+  }
+
+  if (status === "EXPIRED") {
+    return "Vencida"
+  }
+
+  if (status === "CANCELLED") {
+    return "Cancelada"
+  }
+
+  return status || "Sin dato"
+}
+
 function getLoadingTitle(intent: LoadingIntent) {
   if (intent === "payment") {
     return "Procesando pago..."
@@ -1164,7 +1212,10 @@ function getLoadingText(intent: LoadingIntent) {
 }
 
 function getRejectedCopy(error: string) {
-  if (error.startsWith("No eres apto para este producto")) {
+  if (
+    error.startsWith("No eres apto para este producto") ||
+    error.startsWith("No puedes financiar este producto")
+  ) {
     return {
       text: "Revisa otro producto o intenta con una cuenta con mayor crédito disponible",
       title: error
